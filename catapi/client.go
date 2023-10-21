@@ -37,15 +37,6 @@ func (cat *Ciweimao) setParams(data map[string]any) map[string]any {
 	return params
 
 }
-func (cat *Ciweimao) NewAuthentication(loginToken, account string) {
-	if len(loginToken) != 32 {
-		log.Printf("loginToken长度不正确,必须为32位,当前变量:%s", loginToken)
-	} else {
-		options.LoginToken(loginToken).Apply(cat)
-		options.Account(account).Apply(cat)
-	}
-}
-
 func (cat *Ciweimao) post(url string, data map[string]any, opts ...options.HttpOption) gjson.Result {
 	httpBuilder := &options.HttpClient{MaxRetry: 3, Debug: false, DecodeKey: cat.DecodeKey}
 	for _, op := range opts {
