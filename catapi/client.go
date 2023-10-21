@@ -6,56 +6,59 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"github.com/catnovelapi/BuilderHttpClient"
-	"github.com/catnovelapi/catapi/options"
+	"github.com/go-resty/resty/v2"
 	"github.com/tidwall/gjson"
-	"log"
 )
 
-type Ciweimao struct {
-	Host        string
-	Version     string
-	LoginToken  string
-	Account     string
-	DeviceToken string
-	DecodeKey   string
-	Headers     map[string]any
+func (cat *Ciweimao) BuilderClient() *resty.Request {
+	restyClient := resty.New().SetRetryCount(5).SetProxy(cat.Proxy)
+	return restyClient.R().SetDebug(cat.Debug).
+		SetHeaders(map[string]string{
+			"Content-Type": "application/x-www-form-urlencoded",
+			"User-Agent":   "Android com.kuangxiangciweimao.novel " + cat.Version,
+		}).
+		SetFormData(map[string]string{
+			"device_token": "ciweimao_",
+			"app_version":  cat.Version,
+			"login_token":  cat.LoginToken,
+			"account":      cat.Account,
+		})
+}
+func (cat *Ciweimao) PostAPI(url string, data map[string]string) (gjson.Result, error) {
+	response, err := cat.Post(url, data)
+	if err != nil {
+		return gjson.Result{}, err
+	}
+	decodeText, err := cat.DecodeEncryptText(response.String(), cat.DecodeKey)
+	if err != nil {
+		return gjson.Result{}, err
+	}
+	return gjson.Parse(decodeText), nil
+}
+func (cat *Ciweimao) GetAPI(url string, data map[string]string) (gjson.Result, error) {
+	response, err := cat.Get(url, data)
+	if err != nil {
+		return gjson.Result{}, err
+	}
+	decodeText, err := cat.DecodeEncryptText(response.String(), cat.DecodeKey)
+	if err != nil {
+		return gjson.Result{}, err
+	}
+	return gjson.Parse(decodeText), nil
 }
 
-func (cat *Ciweimao) setParams(data map[string]any) map[string]any {
-	params := map[string]any{
-		"device_token": cat.DeviceToken,
-		"app_version":  cat.Version,
-		"login_token":  cat.LoginToken,
-		"account":      cat.Account,
+func (cat *Ciweimao) Post(url string, data map[string]string) (*resty.Response, error) {
+	if data == nil {
+		data = map[string]string{}
 	}
-	if data != nil {
-		for k, v := range data {
-			params[k] = v
-		}
-	}
-	return params
-
+	return cat.BuilderClient().SetFormData(data).Post("https://app.hbooker.com" + url)
 }
-func (cat *Ciweimao) post(url string, data map[string]any, opts ...options.HttpOption) gjson.Result {
-	httpBuilder := &options.HttpClient{MaxRetry: 3, Debug: false, DecodeKey: cat.DecodeKey}
-	for _, op := range opts {
-		op.Apply(httpBuilder)
-	}
-	for i := 0; i < httpBuilder.MaxRetry; i++ {
-		response := BuilderHttpClient.Post(cat.Host+url, BuilderHttpClient.Body(cat.setParams(data)), BuilderHttpClient.Header(cat.Headers))
-		if httpBuilder.Debug {
-			response = response.Debug()
-		}
-		resultText, err := cat.DecodeEncryptText(response.Text(), httpBuilder.DecodeKey)
-		if err == nil {
-			return gjson.Parse(resultText)
-		} else {
-			log.Println("解密失败 ", err)
-		}
 
+func (cat *Ciweimao) Get(url string, data map[string]string) (*resty.Response, error) {
+	if data == nil {
+		data = map[string]string{}
 	}
-	return gjson.Result{}
+	return cat.BuilderClient().SetFormData(data).Get("https://app.hbooker.com" + url)
 }
 
 var IV = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}

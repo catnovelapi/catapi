@@ -2,36 +2,6 @@ package options
 
 import "github.com/catnovelapi/catapi/catapi"
 
-type HttpClient struct {
-	Debug     bool
-	MaxRetry  int
-	DecodeKey string
-}
-
-type HttpOption interface {
-	Apply(*HttpClient)
-}
-type HttpOptionFunc func(*HttpClient)
-
-func (optionFunc HttpOptionFunc) Apply(c *HttpClient) {
-	optionFunc(c)
-}
-func Debug() HttpOption {
-	return HttpOptionFunc(func(c *HttpClient) {
-		c.Debug = true
-	})
-}
-func NoDecode() HttpOption {
-	return HttpOptionFunc(func(c *HttpClient) {
-		c.DecodeKey = ""
-	})
-}
-func MaxRetry(retry int) HttpOption {
-	return HttpOptionFunc(func(c *HttpClient) {
-		c.MaxRetry = retry
-	})
-}
-
 type CiweimaoOption interface {
 	Apply(*catapi.Ciweimao)
 }
@@ -41,11 +11,6 @@ func (optionFunc CiweimaoOptionFunc) Apply(c *catapi.Ciweimao) {
 	optionFunc(c)
 }
 
-func ApiBase(host string) CiweimaoOption {
-	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
-		c.Host = host
-	})
-}
 func Version(version string) CiweimaoOption {
 	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
 		c.Version = version
@@ -56,14 +21,14 @@ func DecodeKey(decodeKey string) CiweimaoOption {
 		c.DecodeKey = decodeKey
 	})
 }
-func DeviceToken(deviceToken string) CiweimaoOption {
+func Debug() CiweimaoOption {
 	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
-		c.DeviceToken = deviceToken
+		c.Debug = true
 	})
 }
-func AppVersion(appVersion string) CiweimaoOption {
+func Proxy(proxy string) CiweimaoOption {
 	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
-		c.Version = appVersion
+		c.Proxy = proxy
 	})
 }
 func LoginToken(loginToken string) CiweimaoOption {
@@ -74,5 +39,11 @@ func LoginToken(loginToken string) CiweimaoOption {
 func Account(account string) CiweimaoOption {
 	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
 		c.Account = account
+	})
+}
+func Auth(account, loginToken string) CiweimaoOption {
+	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
+		Account(account).Apply(c)
+		LoginToken(loginToken).Apply(c)
 	})
 }

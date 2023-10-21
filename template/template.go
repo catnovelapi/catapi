@@ -1,4 +1,4 @@
-package cattemplate
+package template
 
 type AutoRegV2Template struct {
 	LoginToken string `json:"login_token"`
