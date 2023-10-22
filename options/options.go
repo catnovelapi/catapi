@@ -16,11 +16,6 @@ func Version(version string) CiweimaoOption {
 		c.Version = version
 	})
 }
-func DecodeKey(decodeKey string) CiweimaoOption {
-	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
-		c.DecodeKey = decodeKey
-	})
-}
 func Debug() CiweimaoOption {
 	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
 		c.Debug = true

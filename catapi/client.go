@@ -11,11 +11,13 @@ import (
 )
 
 const useragent = "Android com.kuangxiangciweimao.novel "
+const decodeKey = "zG2nSeEfSHfvTCHy5LCcqtBbQehKNLXn"
+const deviceToken = "ciweimao_"
 
 func (cat *Ciweimao) Builder() *Ciweimao {
 	cat.BuilderClient = resty.New().SetRetryCount(5).SetDebug(cat.Debug)
 	cat.BuilderClient.SetFormData(map[string]string{
-		"device_token": "ciweimao_",
+		"device_token": deviceToken,
 		"app_version":  cat.Version,
 		"login_token":  cat.LoginToken,
 		"account":      cat.Account,
@@ -30,8 +32,12 @@ func (cat *Ciweimao) PostAPI(url string, data map[string]string) (gjson.Result, 
 	response, err := cat.Post(url, data)
 	if err != nil {
 		return gjson.Result{}, err
+	} else if response.StatusCode() != 200 {
+		return gjson.Result{}, errors.New("status error: " + response.Status())
+	} else if response.String() == "" {
+		return gjson.Result{}, errors.New("response is empty, please check your network")
 	}
-	decodeText, err := cat.DecodeEncryptText(response.String(), cat.DecodeKey)
+	decodeText, err := cat.DecodeEncryptText(response.String(), decodeKey)
 	if err != nil {
 		return gjson.Result{}, err
 	}
@@ -41,8 +47,12 @@ func (cat *Ciweimao) GetAPI(url string, data map[string]string) (gjson.Result, e
 	response, err := cat.Get(url, data)
 	if err != nil {
 		return gjson.Result{}, err
+	} else if response.StatusCode() != 200 {
+		return gjson.Result{}, errors.New("status error: " + response.Status())
+	} else if response.String() == "" {
+		return gjson.Result{}, errors.New("response is empty, please check your network")
 	}
-	decodeText, err := cat.DecodeEncryptText(response.String(), cat.DecodeKey)
+	decodeText, err := cat.DecodeEncryptText(response.String(), decodeKey)
 	if err != nil {
 		return gjson.Result{}, err
 	}

@@ -12,7 +12,6 @@ type Ciweimao struct {
 	Version       string
 	LoginToken    string
 	Account       string
-	DecodeKey     string
 	BuilderClient *resty.Client
 }
 
