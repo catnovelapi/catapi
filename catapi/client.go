@@ -10,19 +10,21 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func (cat *Ciweimao) BuilderClient() *resty.Request {
-	restyClient := resty.New().SetRetryCount(5).SetProxy(cat.Proxy)
-	return restyClient.R().SetDebug(cat.Debug).
-		SetHeaders(map[string]string{
-			"Content-Type": "application/x-www-form-urlencoded",
-			"User-Agent":   "Android com.kuangxiangciweimao.novel " + cat.Version,
-		}).
-		SetFormData(map[string]string{
-			"device_token": "ciweimao_",
-			"app_version":  cat.Version,
-			"login_token":  cat.LoginToken,
-			"account":      cat.Account,
-		})
+const useragent = "Android com.kuangxiangciweimao.novel "
+
+func (cat *Ciweimao) Builder() *Ciweimao {
+	cat.BuilderClient = resty.New().SetRetryCount(5).SetDebug(cat.Debug)
+	cat.BuilderClient.SetFormData(map[string]string{
+		"device_token": "ciweimao_",
+		"app_version":  cat.Version,
+		"login_token":  cat.LoginToken,
+		"account":      cat.Account,
+	})
+	if cat.Proxy != "" {
+		cat.BuilderClient.SetProxy(cat.Proxy)
+	}
+	cat.BuilderClient.SetHeaders(map[string]string{"User-Agent": useragent + cat.Version})
+	return cat
 }
 func (cat *Ciweimao) PostAPI(url string, data map[string]string) (gjson.Result, error) {
 	response, err := cat.Post(url, data)
@@ -51,14 +53,14 @@ func (cat *Ciweimao) Post(url string, data map[string]string) (*resty.Response, 
 	if data == nil {
 		data = map[string]string{}
 	}
-	return cat.BuilderClient().SetFormData(data).Post("https://app.hbooker.com" + url)
+	return cat.BuilderClient.R().SetFormData(data).Post(baseUrl + url)
 }
 
 func (cat *Ciweimao) Get(url string, data map[string]string) (*resty.Response, error) {
 	if data == nil {
 		data = map[string]string{}
 	}
-	return cat.BuilderClient().SetFormData(data).Get("https://app.hbooker.com" + url)
+	return cat.BuilderClient.R().SetFormData(data).Get(baseUrl + url)
 }
 
 var IV = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}

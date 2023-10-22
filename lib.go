@@ -14,5 +14,5 @@ func NewCiweimaoClient(options ...options.CiweimaoOption) *catapi.Ciweimao {
 	for _, option := range options {
 		option.Apply(client)
 	}
-	return client
+	return client.Builder()
 }
