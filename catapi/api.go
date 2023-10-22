@@ -6,13 +6,13 @@ import (
 )
 
 type Ciweimao struct {
-	Debug      bool
-	Proxy      string
-	Host       string
-	Version    string
-	LoginToken string
-	Account    string
-	DecodeKey  string
+	Debug         bool
+	Proxy         string
+	Host          string
+	Version       string
+	LoginToken    string
+	Account       string
+	BuilderClient *resty.Client
 }
 
 func (cat *Ciweimao) AccountInfoApi() (gjson.Result, error) {
