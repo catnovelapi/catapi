@@ -1,8 +1,10 @@
 package catapi
 
 import (
+	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/tidwall/gjson"
+	"regexp"
 )
 
 type Ciweimao struct {
@@ -19,31 +21,47 @@ func (cat *Ciweimao) AccountInfoApi() (gjson.Result, error) {
 	return cat.PostAPI(accountInfoApiPoint, nil)
 }
 
-func (cat *Ciweimao) CatalogByBookIdApi(bookID string) (gjson.Result, error) {
-	return cat.PostAPI(catalogApiPoint, map[string]string{"book_id": bookID})
+func (cat *Ciweimao) ChaptersCatalogApi(bookId string) (gjson.Result, error) {
+	return cat.PostAPI(catalogApiPoint, map[string]string{"book_id": bookId})
 }
 
-func (cat *Ciweimao) CatalogByBookIdNewApi(bookID string) (gjson.Result, error) {
-	return cat.PostAPI(catalogNewApiPoint, map[string]string{"book_id": bookID})
+func (cat *Ciweimao) ChaptersCatalogV2Api(bookId string) (gjson.Result, error) {
+	return cat.PostAPI(catalogNewApiPoint, map[string]string{"book_id": bookId})
 }
 
-func (cat *Ciweimao) BookInfoApi(bookId string) (gjson.Result, error) {
+func (cat *Ciweimao) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
+	if len(bookId) != 9 {
+		return gjson.Result{}, fmt.Errorf("bookId length is not 9")
+	}
 	return cat.PostAPI(bookInfoApiPoint, map[string]string{"book_id": bookId})
 }
 
-func (cat *Ciweimao) SearchByKeywordApi(keyword, page, categoryIndex string) (gjson.Result, error) {
-	return cat.PostAPI(searchBookApiPoint, map[string]string{"count": "10", "page": page, "category_index": categoryIndex, "key": keyword})
+func (cat *Ciweimao) BookInfoApiByBookURL(url string) (gjson.Result, error) {
+	if bookIdStr := regexp.MustCompile(`book/(\d{9})`).FindStringSubmatch(url); len(bookIdStr) < 2 {
+		return gjson.Result{}, fmt.Errorf("bookId is empty")
+	} else {
+		return cat.BookInfoApiByBookId(bookIdStr[1])
+	}
 }
 
-func (cat *Ciweimao) SignupApi(account, password string) (gjson.Result, error) {
+func (cat *Ciweimao) SearchByKeywordApi(keyword, page string) (gjson.Result, error) {
+	return cat.PostAPI(searchBookApiPoint, map[string]string{"count": "10", "page": page, "category_index": "0", "key": keyword})
+}
+
+func (cat *Ciweimao) SearchByTagApi(tagName, page string) (gjson.Result, error) {
+	return cat.PostAPI(searchBookApiPoint, map[string]string{"count": "10", "page": page, "category_index": "0", "key": tagName})
+}
+func (cat *Ciweimao) SignupApi(account string, password string) (gjson.Result, error) {
 	return cat.PostAPI(loginApiPoint, map[string]string{"login_name": account, "passwd": password})
 }
-
 func (cat *Ciweimao) ChapterCommandApi(chapterId string) (gjson.Result, error) {
 	return cat.PostAPI(chapterCommandApiPoint, map[string]string{"chapter_id": chapterId})
 }
 
 func (cat *Ciweimao) ChapterInfoApi(chapterId string, command string) (gjson.Result, error) {
+	if command == "" || len(command) > 100 {
+		return gjson.Result{}, fmt.Errorf("command is empty or too long")
+	}
 	return cat.PostAPI(chapterInfoApiPoint, map[string]string{"chapter_id": chapterId, "chapter_command": command})
 }
 
