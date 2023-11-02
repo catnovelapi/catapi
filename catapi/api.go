@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/tidwall/gjson"
+	"os"
 	"regexp"
 )
 
 type Ciweimao struct {
 	Debug         bool
+	FileLog       *os.File
 	Proxy         string
 	Host          string
 	Version       string
@@ -37,11 +39,11 @@ func (cat *Ciweimao) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
 }
 
 func (cat *Ciweimao) BookInfoApiByBookURL(url string) (gjson.Result, error) {
-	if bookIdStr := regexp.MustCompile(`book/(\d{9})`).FindStringSubmatch(url); len(bookIdStr) < 2 {
+	bookIdStr := regexp.MustCompile(`book/(\d{9})`).FindStringSubmatch(url)
+	if len(bookIdStr) < 2 {
 		return gjson.Result{}, fmt.Errorf("bookId is empty")
-	} else {
-		return cat.BookInfoApiByBookId(bookIdStr[1])
 	}
+	return cat.BookInfoApiByBookId(bookIdStr[1])
 }
 
 func (cat *Ciweimao) SearchByKeywordApi(keyword, page string) (gjson.Result, error) {
