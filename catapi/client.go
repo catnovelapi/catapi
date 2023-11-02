@@ -68,7 +68,10 @@ func (cat *Ciweimao) addLogger(resp *resty.Response, err error) {
 
 }
 func (cat *Ciweimao) PostAPI(url string, data map[string]string) (gjson.Result, error) {
-	response, err := cat.Post(url, data)
+	if data == nil {
+		data = map[string]string{}
+	}
+	response, err := cat.BuilderClient.R().SetFormData(data).Post(baseUrl + url)
 	defer cat.addLogger(response, err)
 	if err != nil {
 		return gjson.Result{}, err
@@ -89,11 +92,15 @@ func (cat *Ciweimao) PostAPI(url string, data map[string]string) (gjson.Result, 
 	return gjson.Parse(responseText), nil
 }
 func (cat *Ciweimao) GetAPI(url string, data map[string]string) (gjson.Result, error) {
-	response, err := cat.Get(url, data)
+	if data == nil {
+		data = map[string]string{}
+	}
+	response, err := cat.BuilderClient.R().SetFormData(data).Get(baseUrl + url)
 	defer cat.addLogger(response, err)
 	if err != nil {
 		return gjson.Result{}, err
-	} else if response.StatusCode() != 200 {
+	}
+	if response.StatusCode() != 200 {
 		return gjson.Result{}, errors.New("status error: " + response.Status())
 	}
 	responseText := response.String()
@@ -107,20 +114,6 @@ func (cat *Ciweimao) GetAPI(url string, data map[string]string) (gjson.Result, e
 		}
 	}
 	return gjson.Parse(responseText), nil
-}
-
-func (cat *Ciweimao) Post(url string, data map[string]string) (*resty.Response, error) {
-	if data == nil {
-		data = map[string]string{}
-	}
-	return cat.BuilderClient.R().SetFormData(data).Post(baseUrl + url)
-}
-
-func (cat *Ciweimao) Get(url string, data map[string]string) (*resty.Response, error) {
-	if data == nil {
-		data = map[string]string{}
-	}
-	return cat.BuilderClient.R().SetFormData(data).Get(baseUrl + url)
 }
 
 var IV = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
