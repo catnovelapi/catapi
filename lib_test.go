@@ -15,15 +15,18 @@ func TestNewCiweimaoClient(t *testing.T) {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	CiweimaoClient := NewCiweimaoClient(
+	client := NewCiweimaoClient(
 		options.Debug(),
 		options.Proxy(os.Getenv("PROXY")),
 		options.Auth(os.Getenv("CAT_ACCOUNT"), os.Getenv("CAT_LOGIN_TOKEN")),
 	)
-	searchByKeywordApi, err := CiweimaoClient.SearchByKeywordApi("", "1", "0")
+	searchByKeywordApi, err := client.SearchByKeywordApi(os.Getenv("SEARCH_KEYWORD"), "0")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	t.Log(searchByKeywordApi)
+	for _, book := range searchByKeywordApi.Get("data").Array() {
+		println(book.Get("book_id").String())
+		println(book.Get("book_name").String())
+	}
 }

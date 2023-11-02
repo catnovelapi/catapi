@@ -19,6 +19,17 @@ type Ciweimao struct {
 	BuilderClient *resty.Client
 }
 
+func (cat *Ciweimao) DownloadCover(url string) ([]byte, error) {
+	for i := 0; i < 5; i++ {
+		response, err := cat.BuilderClient.R().Get(url)
+		if err != nil {
+			fmt.Printf("download cover error,retry %d times\n", i)
+			continue
+		}
+		return response.Body(), nil
+	}
+	return nil, fmt.Errorf("download cover error:%s\nurl:%s\n", "retry 5 times", url)
+}
 func (cat *Ciweimao) AccountInfoApi() (gjson.Result, error) {
 	return cat.PostAPI(accountInfoApiPoint, nil)
 }
@@ -39,11 +50,11 @@ func (cat *Ciweimao) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
 }
 
 func (cat *Ciweimao) BookInfoApiByBookURL(url string) (gjson.Result, error) {
-	bookIdStr := regexp.MustCompile(`book/(\d{9})`).FindStringSubmatch(url)
-	if len(bookIdStr) < 2 {
+	bookIdMustCompile := regexp.MustCompile(`book/(\d{9})`).FindStringSubmatch(url)
+	if len(bookIdMustCompile) < 2 {
 		return gjson.Result{}, fmt.Errorf("bookId is empty")
 	}
-	return cat.BookInfoApiByBookId(bookIdStr[1])
+	return cat.BookInfoApiByBookId(bookIdMustCompile[1])
 }
 
 func (cat *Ciweimao) SearchByKeywordApi(keyword, page string) (gjson.Result, error) {
