@@ -6,71 +6,114 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/tidwall/gjson"
+	"log"
 )
 
-const useragent = "Android com.kuangxiangciweimao.novel "
 const decodeKey = "zG2nSeEfSHfvTCHy5LCcqtBbQehKNLXn"
-const deviceToken = "ciweimao_"
 
-func (cat *Ciweimao) Builder() *Ciweimao {
-	cat.BuilderClient = resty.New().SetRetryCount(5).SetDebug(cat.Debug)
-	cat.BuilderClient.SetFormData(map[string]string{
-		"device_token": deviceToken,
-		"app_version":  cat.Version,
-		"login_token":  cat.LoginToken,
-		"account":      cat.Account,
-	})
-	if cat.Proxy != "" {
-		cat.BuilderClient.SetProxy(cat.Proxy)
+func (cat *Ciweimao) addLogger(resp *resty.Response, err error) {
+	if !cat.Debug {
+		return
 	}
-	cat.BuilderClient.SetHeaders(map[string]string{"User-Agent": useragent + cat.Version})
-	return cat
+	var responseInfo string
+	responseInfo = "Response Info:\n"
+	if err != nil {
+		responseInfo += fmt.Sprintf("  Error: %s\n", err.Error())
+	}
+	responseInfo += fmt.Sprintf("  Status Code: %d\n", resp.StatusCode())
+	responseInfo += fmt.Sprintf("  Status : %s\n", resp.Status())
+	responseInfo += fmt.Sprintf("  Proto      :%s\n", resp.Proto())
+	responseInfo += fmt.Sprintf("  Time	   :%s\n", resp.Time())
+	responseInfo += fmt.Sprintf("  Received At:%s\n", resp.Time())
+	if len(resp.Header()) > 0 {
+		responseInfo += fmt.Sprintf("  Header     :\n")
+		for k, v := range resp.Header() {
+			responseInfo += fmt.Sprintf("    Header     : %s=%s\n", k, v)
+		}
+	}
+	if len(resp.Cookies()) > 0 {
+		responseInfo += fmt.Sprintf("  Cookies    :\n")
+		for _, cookie := range resp.Cookies() {
+			responseInfo += fmt.Sprintf("    Cookie     : %s=%s\n", cookie.Name, cookie.Value)
+		}
+	}
+	if resp.Request.FormData != nil {
+		responseInfo += fmt.Sprintf("  Form       :\n")
+		for k, v := range resp.Request.FormData {
+			responseInfo += fmt.Sprintf("    Form       : %s=%s\n", k, v)
+		}
+	}
+	result := string(resp.Body())
+	if result != "" {
+		if gjson.Valid(result) {
+			responseInfo += fmt.Sprintf("  Body       :\n %s\n", result)
+		} else {
+			result, err = cat.DecodeEncryptText(result, decodeKey)
+			if err != nil {
+				responseInfo += fmt.Sprintf("  Decode Error: %s\n", err.Error())
+				responseInfo += fmt.Sprintf("  Body       :\n %s\n", result)
+			} else {
+				responseInfo += fmt.Sprintf("  Body       :\n %s\n", result)
+			}
+		}
+	}
+	_, err = cat.FileLog.WriteString(responseInfo)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 }
 func (cat *Ciweimao) PostAPI(url string, data map[string]string) (gjson.Result, error) {
-	response, err := cat.Post(url, data)
+	if data == nil {
+		data = map[string]string{}
+	}
+	response, err := cat.BuilderClient.R().SetFormData(data).Post(baseUrl + url)
+	defer cat.addLogger(response, err)
 	if err != nil {
 		return gjson.Result{}, err
-	} else if response.StatusCode() != 200 {
+	}
+	if response.StatusCode() != 200 {
 		return gjson.Result{}, errors.New("status error: " + response.Status())
-	} else if response.String() == "" {
-		return gjson.Result{}, errors.New("response is empty, please check your network")
 	}
-	decodeText, err := cat.DecodeEncryptText(response.String(), decodeKey)
-	if err != nil {
-		return gjson.Result{}, err
+	responseText := response.String()
+	if responseText == "" {
+		return gjson.Result{}, errors.New("responseText is empty, please check your network")
 	}
-	return gjson.Parse(decodeText), nil
+	if !gjson.Valid(responseText) {
+		responseText, err = cat.DecodeEncryptText(response.String(), decodeKey)
+		if err != nil {
+			return gjson.Result{}, err
+		}
+	}
+	return gjson.Parse(responseText), nil
 }
 func (cat *Ciweimao) GetAPI(url string, data map[string]string) (gjson.Result, error) {
-	response, err := cat.Get(url, data)
+	if data == nil {
+		data = map[string]string{}
+	}
+	response, err := cat.BuilderClient.R().SetFormData(data).Get(baseUrl + url)
+	defer cat.addLogger(response, err)
 	if err != nil {
 		return gjson.Result{}, err
-	} else if response.StatusCode() != 200 {
+	}
+	if response.StatusCode() != 200 {
 		return gjson.Result{}, errors.New("status error: " + response.Status())
-	} else if response.String() == "" {
-		return gjson.Result{}, errors.New("response is empty, please check your network")
 	}
-	decodeText, err := cat.DecodeEncryptText(response.String(), decodeKey)
-	if err != nil {
-		return gjson.Result{}, err
+	responseText := response.String()
+	if responseText == "" {
+		return gjson.Result{}, errors.New("responseText is empty, please check your network")
 	}
-	return gjson.Parse(decodeText), nil
-}
-
-func (cat *Ciweimao) Post(url string, data map[string]string) (*resty.Response, error) {
-	if data == nil {
-		data = map[string]string{}
+	if !gjson.Valid(responseText) {
+		responseText, err = cat.DecodeEncryptText(response.String(), decodeKey)
+		if err != nil {
+			return gjson.Result{}, err
+		}
 	}
-	return cat.BuilderClient.R().SetFormData(data).Post(baseUrl + url)
-}
-
-func (cat *Ciweimao) Get(url string, data map[string]string) (*resty.Response, error) {
-	if data == nil {
-		data = map[string]string{}
-	}
-	return cat.BuilderClient.R().SetFormData(data).Get(baseUrl + url)
+	return gjson.Parse(responseText), nil
 }
 
 var IV = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
