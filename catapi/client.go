@@ -29,19 +29,19 @@ func (cat *Ciweimao) addLogger(resp *resty.Response, err error) {
 	responseInfo += fmt.Sprintf("  Time	   :%s\n", resp.Time())
 	responseInfo += fmt.Sprintf("  Received At:%s\n", resp.Time())
 	if len(resp.Header()) > 0 {
-		responseInfo += fmt.Sprintf("  Header     :\n")
+		responseInfo += fmt.Sprintf("  Header:\n")
 		for k, v := range resp.Header() {
 			responseInfo += fmt.Sprintf("    Header     : %s=%s\n", k, v)
 		}
 	}
 	if len(resp.Cookies()) > 0 {
-		responseInfo += fmt.Sprintf("  Cookies    :\n")
+		responseInfo += fmt.Sprintf("  Cookies:\n")
 		for _, cookie := range resp.Cookies() {
 			responseInfo += fmt.Sprintf("    Cookie     : %s=%s\n", cookie.Name, cookie.Value)
 		}
 	}
 	if resp.Request.FormData != nil {
-		responseInfo += fmt.Sprintf("  Form       :\n")
+		responseInfo += fmt.Sprintf("  Form:\n")
 		for k, v := range resp.Request.FormData {
 			responseInfo += fmt.Sprintf("    Form       : %s=%s\n", k, v)
 		}
@@ -49,17 +49,18 @@ func (cat *Ciweimao) addLogger(resp *resty.Response, err error) {
 	result := string(resp.Body())
 	if result != "" {
 		if gjson.Valid(result) {
-			responseInfo += fmt.Sprintf("  Body       :\n %s\n", result)
+			responseInfo += fmt.Sprintf("  Result       :\n %s\n", result)
 		} else {
 			result, err = cat.DecodeEncryptText(result, decodeKey)
 			if err != nil {
 				responseInfo += fmt.Sprintf("  Decode Error: %s\n", err.Error())
-				responseInfo += fmt.Sprintf("  Body       :\n %s\n", result)
+				responseInfo += fmt.Sprintf("  Result       :\n %s\n", result)
 			} else {
-				responseInfo += fmt.Sprintf("  Body       :\n %s\n", result)
+				responseInfo += fmt.Sprintf("  Result       :\n %s\n", result)
 			}
 		}
 	}
+	responseInfo += fmt.Sprintf("============================================================\n")
 	_, err = cat.FileLog.WriteString(responseInfo)
 	if err != nil {
 		log.Println(err)
