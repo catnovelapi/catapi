@@ -1,59 +1,81 @@
-# CatNovelAPI: Detailed Documentation
+# Catapi - Ciweimao Client Library for Go
 
-`CatNovelAPI` is a Go-based API client library that provides an easy-to-use interface for interacting with the `Ciweimao` API, a service that provides access to various book-related data and functionalities.
+Catapi is a Go client library for accessing the Ciweimao API, a popular Chinese web novel platform. It provides a simple and efficient way of interacting with the Ciweimao API, allowing users to fetch information, perform operations, and handle responses from the API in a Go-friendly way.
 
 ## Installation
-
-To use `CatNovelAPI`, you are required to import the library in your Go project. Here is the import statement:
-
-```go
-import (
-	"github.com/catnovelapi/catapi/catapi"
-	"github.com/catnovelapi/catapi/options"
-)
+Install Catapi by running:
+```
+go get github.com/catnovelapi/catapi
 ```
 
 ## Usage
 
-### Creating a New Client
-
-To create a new instance of the `Ciweimao` client, you can use the `NewCiweimaoClient` function. It accepts an arbitrary number of options that can be used to configure the client. This function returns a pointer to a new `Ciweimao` instance with the provided options applied.
-
+First, import the library:
 ```go
-client := catapi.NewCiweimaoClient(
-    options.Debug(),
-    options.Version("2.9.290"),
-    // other options...
-)
+import "github.com/catnovelapi/catapi/catapi"
 ```
 
-### Client Options
+To start using the library, you need to create a new client:
+```go
+client := catapi.NewCiweimaoClient()
+```
 
-The `options` package provides several functions that return `CiweimaoOption` instances. These can be used to configure the `Ciweimao` client. The available options are:
+You can then use this client to call various methods on the Ciweimao API. For example, to get account information:
+```go
+result, err := client.Ciweimao.AccountInfoApi()
+if err != nil {
+    log.Fatal(err)
+} else {
+    fmt.Println(result)
+}
+```
 
-- `Debug()`: Enables debug mode. In debug mode, additional information might be logged (typically useful for development and debugging).
-- `Version(string)`: Specifies the version of the API to use.
-- `Proxy(string)`: Sets a proxy to use for API requests.
-- `LoginToken(string)`: Sets the login token for the client. This is required for API methods that need authentication.
-- `Account(string)`: Sets the account name for the client.
-- `Auth(string, string)`: Sets both the account name and login token for the client.
+## Methods
 
-### API Methods
+The `CiweimaoClient` struct has the following methods:
 
-The `Ciweimao` client provides several methods that correspond to the different API endpoints. These methods return a `gjson.Result` object and an error (if any occurred during the API request). Following are descriptions of some of these methods:
+- `NewCiweimaoClient()` - Creates a new `CiweimaoClient`.
+- `SetVersion(version string)` - Sets the version for the client.
+- `SetDebug()` - Sets the client in Debug mode. Logs will be written to `catapi.log`.
+- `SetProxy(proxy string)` - Sets the proxy for the client.
+- `SetLoginToken(loginToken string)` - Sets the login token for the client.
+- `SetAccount(account string)` - Sets the account for the client.
+- `SetAuth(account, loginToken string)` - Sets both the account and login token for the client.
 
-- `AccountInfoApi()`: Retrieves account information. Accepts no parameters.
-- `CatalogByBookIdApi(string)`: Retrieves the catalog for a specific book by its `bookID`.
-- `BookInfoApi(string)`: Retrieves information about a specific book by its `bookID`.
-- `SearchByKeywordApi(string, string, string)`: Searches for books by keyword, page, and category index.
-- `SignupApi(string, string)`: Signs up a new user with the provided `account` and `password`.
+## API Endpoints
 
-For a full list of API methods and their descriptions, please refer to the `catapi` package documentation.
+Here are the main API endpoints that the `Ciweimao` struct provides:
+
+### Account Management
+- `LoginApi(username, password string) (LoginResult, error)`: Logs in to an account.
+- `AccountInfoApi() (AccountInfoResult, error)`: Retrieves account information.
+
+### Book Management
+- `BookshelfApi() (BookshelfResult, error)`: Returns the list of books on the user's bookshelf.
+- `BookInfoApiByBookId(bookId string) (BookInfoResult, error)`: Retrieves book information by book ID.
+- `BookInfoApiByBookName(bookName string) (BookInfoResult, error)`: Retrieves book information by book name.
+- `ChaptersCatalogApi(bookId string) (ChaptersCatalogResult, error)`: Retrieves the catalog of chapters for a given book.
+- `DownloadCover(url string) (DownloadCoverResult, error)`: Downloads a cover image.
+
+### Search
+- `SearchByKeywordApi(keyword, page string) (SearchResult, error)`: Searches for a book by keyword.
+
+### Chapter Management
+- `ChapterContentApi(bookId, chapterId string) (ChapterContentResult, error)`: Retrieves the content of a specific chapter.
+
+### Rankings
+- `RankingsApi() (RankingsResult, error)`: Retrieves the platform's rankings.
+
+Please note that each of these methods returns a specific result struct and an error. For example, `LoginApi` returns a `LoginResult` and an `error`. You should always check the error before using the result.
 
 ## Contributing
 
-Contributions to the `CatNovelAPI` are welcome. Whether you find a bug, have a suggestion for an improvement, or want to add a new feature, we appreciate your help. Please submit a pull request or create an issue to contribute.
+Contributions are welcome! Please submit a pull request or create an issue on the GitHub page for this project.
 
 ## License
 
-`CatNovelAPI` is released under the MIT license. This license is a short, permissive software license. Basically, you can do whatever you want with this software, as long as you include the original copyright and license notice in any copy of the software/source. For more information, see the LICENSE file in the repository.
+The Catapi library is open source and available under the [MIT License](https://opensource.org/licenses/MIT).
+
+## Disclaimer
+
+This library is not officially affiliated with Ciweimao. Please use responsibly and in accordance with Ciweimao's terms of service.
