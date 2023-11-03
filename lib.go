@@ -5,6 +5,8 @@ import (
 	"github.com/go-resty/resty/v2"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 )
 
 const deviceToken = "ciweimao_"
@@ -55,10 +57,23 @@ func (ciweimaoClient *CiweimaoClient) SetProxy(proxy string) *CiweimaoClient {
 	return ciweimaoClient
 }
 func (ciweimaoClient *CiweimaoClient) SetLoginToken(loginToken string) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.LoginToken = loginToken
+	if len(loginToken) != 32 {
+		log.Println("loginToken length is not 32")
+	} else {
+		ciweimaoClient.Ciweimao.Req.LoginToken = loginToken
+	}
 	return ciweimaoClient
 
 }
+
+func UnescapeUnicode(raw []byte) ([]byte, error) {
+	str, err := strconv.Unquote(strings.Replace(strconv.Quote(string(raw)), `\\u`, `\u`, -1))
+	if err != nil {
+		return nil, err
+	}
+	return []byte(str), nil
+}
+
 func (ciweimaoClient *CiweimaoClient) SetAccount(account string) *CiweimaoClient {
 	ciweimaoClient.Ciweimao.Req.Account = account
 	return ciweimaoClient
