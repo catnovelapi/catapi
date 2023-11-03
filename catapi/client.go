@@ -17,7 +17,6 @@ type CiweimaoRequest struct {
 	Debug         bool
 	FileLog       *os.File
 	Proxy         string
-	Host          string
 	Version       string
 	LoginToken    string
 	Account       string
@@ -86,7 +85,7 @@ func (request *CiweimaoRequest) PostAPI(url string, data map[string]string) (gjs
 	response, err := request.BuilderClient.R().SetFormData(data).Post(url)
 	defer request.addLogger(response, err)
 	if err != nil {
-		return gjson.Result{}, err
+		return gjson.Result{}, fmt.Errorf("request error: %s", err.Error())
 	}
 	if response.StatusCode() != 200 {
 		return gjson.Result{}, errors.New("status error: " + response.Status())
@@ -98,7 +97,7 @@ func (request *CiweimaoRequest) PostAPI(url string, data map[string]string) (gjs
 	if !gjson.Valid(responseText) {
 		responseText, err = request.DecodeEncryptText(response.String(), decodeKey)
 		if err != nil {
-			return gjson.Result{}, err
+			return gjson.Result{}, fmt.Errorf("decode error: %s", err.Error())
 		}
 	}
 	return gjson.Parse(responseText), nil
@@ -168,7 +167,7 @@ func (request *CiweimaoRequest) DecodeEncryptText(str string, decodeKey string) 
 	}
 	decoded, err := base64.StdEncoding.DecodeString(str)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("base64 decode error: %s", err.Error())
 	}
 	raw, err := aesDecrypt(decodeKey, decoded)
 	if err != nil {

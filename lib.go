@@ -21,14 +21,6 @@ func NewCiweimaoClient() *CiweimaoClient {
 		Version:       "2.9.290",
 		BuilderClient: resty.New().SetRetryCount(7).SetBaseURL("https://app.hbooker.com"),
 	}
-	if client.Ciweimao.Req.Debug {
-		client.Ciweimao.Req.BuilderClient.SetDebug(client.Ciweimao.Req.Debug)
-		file, err := os.OpenFile("catapi.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err != nil {
-			log.Fatalln("open file error !")
-		}
-		client.Ciweimao.Req.FileLog = file
-	}
 	if client.Ciweimao.Req.Proxy != "" {
 		client.Ciweimao.Req.BuilderClient.SetProxy(client.Ciweimao.Req.Proxy)
 	}
@@ -50,6 +42,12 @@ func (ciweimaoClient *CiweimaoClient) SetVersion(version string) *CiweimaoClient
 
 func (ciweimaoClient *CiweimaoClient) SetDebug() *CiweimaoClient {
 	ciweimaoClient.Ciweimao.Req.Debug = true
+	ciweimaoClient.Ciweimao.Req.BuilderClient.SetDebug(true)
+	file, err := os.OpenFile("catapi.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalln("open file error !")
+	}
+	ciweimaoClient.Ciweimao.Req.FileLog = file
 	return ciweimaoClient
 }
 func (ciweimaoClient *CiweimaoClient) SetProxy(proxy string) *CiweimaoClient {
