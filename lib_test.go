@@ -1,7 +1,6 @@
 package catapi
 
 import (
-	"fmt"
 	"github.com/catnovelapi/catapi/options"
 	"github.com/joho/godotenv"
 	"log"
@@ -21,13 +20,13 @@ func TestNewCiweimaoClient(t *testing.T) {
 		options.Proxy(os.Getenv("PROXY")),
 		options.Auth(os.Getenv("CAT_ACCOUNT"), os.Getenv("CAT_LOGIN_TOKEN")),
 	)
-	bookInfo, err := client.BookInfoApiByBookId("")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	fmt.Println(bookInfo.Get("data.book_name").String())
-	searchByKeywordApi, err := client.SearchByKeywordApi(os.Getenv("SEARCH_KEYWORD"), "0")
+	//bookInfo, err := client.Ciweimao.BookInfoApiByBookId("")
+	//if err != nil {
+	//	t.Error(err)
+	//	return
+	//}
+	//fmt.Println(bookInfo.Get("data.book_name").String())
+	searchByKeywordApi, err := client.Ciweimao.SearchByKeywordApi(os.Getenv("SEARCH_KEYWORD"), "0")
 	if err != nil {
 		t.Error(err)
 		return

@@ -2,42 +2,42 @@ package options
 
 import "github.com/catnovelapi/catapi/catapi"
 
-type CiweimaoOption interface {
-	Apply(*catapi.Ciweimao)
+type CiweimaoRequestOption interface {
+	Apply(*catapi.CiweimaoRequest)
 }
-type CiweimaoOptionFunc func(*catapi.Ciweimao)
+type CiweimaoRequestOptionFunc func(*catapi.CiweimaoRequest)
 
-func (optionFunc CiweimaoOptionFunc) Apply(c *catapi.Ciweimao) {
+func (optionFunc CiweimaoRequestOptionFunc) Apply(c *catapi.CiweimaoRequest) {
 	optionFunc(c)
 }
 
-func Version(version string) CiweimaoOption {
-	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
+func Version(version string) CiweimaoRequestOption {
+	return CiweimaoRequestOptionFunc(func(c *catapi.CiweimaoRequest) {
 		c.Version = version
 	})
 }
-func Debug() CiweimaoOption {
-	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
+func Debug() CiweimaoRequestOption {
+	return CiweimaoRequestOptionFunc(func(c *catapi.CiweimaoRequest) {
 		c.Debug = true
 	})
 }
-func Proxy(proxy string) CiweimaoOption {
-	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
+func Proxy(proxy string) CiweimaoRequestOption {
+	return CiweimaoRequestOptionFunc(func(c *catapi.CiweimaoRequest) {
 		c.Proxy = proxy
 	})
 }
-func LoginToken(loginToken string) CiweimaoOption {
-	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
+func LoginToken(loginToken string) CiweimaoRequestOption {
+	return CiweimaoRequestOptionFunc(func(c *catapi.CiweimaoRequest) {
 		c.LoginToken = loginToken
 	})
 }
-func Account(account string) CiweimaoOption {
-	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
+func Account(account string) CiweimaoRequestOption {
+	return CiweimaoRequestOptionFunc(func(c *catapi.CiweimaoRequest) {
 		c.Account = account
 	})
 }
-func Auth(account, loginToken string) CiweimaoOption {
-	return CiweimaoOptionFunc(func(c *catapi.Ciweimao) {
+func Auth(account, loginToken string) CiweimaoRequestOption {
+	return CiweimaoRequestOptionFunc(func(c *catapi.CiweimaoRequest) {
 		Account(account).Apply(c)
 		LoginToken(loginToken).Apply(c)
 	})
