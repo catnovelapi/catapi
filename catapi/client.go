@@ -10,12 +10,23 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/tidwall/gjson"
 	"log"
+	"os"
 )
+
+type CiweimaoRequest struct {
+	Debug         bool
+	FileLog       *os.File
+	Proxy         string
+	Version       string
+	LoginToken    string
+	Account       string
+	BuilderClient *resty.Client
+}
 
 const decodeKey = "zG2nSeEfSHfvTCHy5LCcqtBbQehKNLXn"
 
-func (cat *Ciweimao) addLogger(resp *resty.Response, err error) {
-	if !cat.Debug {
+func (request *CiweimaoRequest) addLogger(resp *resty.Response, err error) {
+	if !request.Debug {
 		return
 	}
 	var responseInfo string
@@ -29,19 +40,19 @@ func (cat *Ciweimao) addLogger(resp *resty.Response, err error) {
 	responseInfo += fmt.Sprintf("  Time	   :%s\n", resp.Time())
 	responseInfo += fmt.Sprintf("  Received At:%s\n", resp.Time())
 	if len(resp.Header()) > 0 {
-		responseInfo += fmt.Sprintf("  Header     :\n")
+		responseInfo += fmt.Sprintf("  Header:\n")
 		for k, v := range resp.Header() {
 			responseInfo += fmt.Sprintf("    Header     : %s=%s\n", k, v)
 		}
 	}
 	if len(resp.Cookies()) > 0 {
-		responseInfo += fmt.Sprintf("  Cookies    :\n")
+		responseInfo += fmt.Sprintf("  Cookies:\n")
 		for _, cookie := range resp.Cookies() {
 			responseInfo += fmt.Sprintf("    Cookie     : %s=%s\n", cookie.Name, cookie.Value)
 		}
 	}
 	if resp.Request.FormData != nil {
-		responseInfo += fmt.Sprintf("  Form       :\n")
+		responseInfo += fmt.Sprintf("  Form:\n")
 		for k, v := range resp.Request.FormData {
 			responseInfo += fmt.Sprintf("    Form       : %s=%s\n", k, v)
 		}
@@ -49,32 +60,32 @@ func (cat *Ciweimao) addLogger(resp *resty.Response, err error) {
 	result := string(resp.Body())
 	if result != "" {
 		if gjson.Valid(result) {
-			responseInfo += fmt.Sprintf("  Body       :\n %s\n", result)
+			responseInfo += fmt.Sprintf("  Result       :\n %s\n", result)
 		} else {
-			result, err = cat.DecodeEncryptText(result, decodeKey)
+			result, err = request.DecodeEncryptText(result, decodeKey)
 			if err != nil {
 				responseInfo += fmt.Sprintf("  Decode Error: %s\n", err.Error())
-				responseInfo += fmt.Sprintf("  Body       :\n %s\n", result)
+				responseInfo += fmt.Sprintf("  Result       :\n %s\n", result)
 			} else {
-				responseInfo += fmt.Sprintf("  Body       :\n %s\n", result)
+				responseInfo += fmt.Sprintf("  Result       :\n %s\n", result)
 			}
 		}
 	}
-	_, err = cat.FileLog.WriteString(responseInfo)
+	responseInfo += fmt.Sprintf("============================================================\n")
+	_, err = request.FileLog.WriteString(responseInfo)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-
 }
-func (cat *Ciweimao) PostAPI(url string, data map[string]string) (gjson.Result, error) {
+func (request *CiweimaoRequest) PostAPI(url string, data map[string]string) (gjson.Result, error) {
 	if data == nil {
 		data = map[string]string{}
 	}
-	response, err := cat.BuilderClient.R().SetFormData(data).Post(baseUrl + url)
-	defer cat.addLogger(response, err)
+	response, err := request.BuilderClient.R().SetFormData(data).Post(url)
+	defer request.addLogger(response, err)
 	if err != nil {
-		return gjson.Result{}, err
+		return gjson.Result{}, fmt.Errorf("request error: %s", err.Error())
 	}
 	if response.StatusCode() != 200 {
 		return gjson.Result{}, errors.New("status error: " + response.Status())
@@ -84,19 +95,19 @@ func (cat *Ciweimao) PostAPI(url string, data map[string]string) (gjson.Result, 
 		return gjson.Result{}, errors.New("responseText is empty, please check your network")
 	}
 	if !gjson.Valid(responseText) {
-		responseText, err = cat.DecodeEncryptText(response.String(), decodeKey)
+		responseText, err = request.DecodeEncryptText(response.String(), decodeKey)
 		if err != nil {
-			return gjson.Result{}, err
+			return gjson.Result{}, fmt.Errorf("decode error: %s", err.Error())
 		}
 	}
 	return gjson.Parse(responseText), nil
 }
-func (cat *Ciweimao) GetAPI(url string, data map[string]string) (gjson.Result, error) {
+func (request *CiweimaoRequest) GetAPI(url string, data map[string]string) (gjson.Result, error) {
 	if data == nil {
 		data = map[string]string{}
 	}
-	response, err := cat.BuilderClient.R().SetFormData(data).Get(baseUrl + url)
-	defer cat.addLogger(response, err)
+	response, err := request.BuilderClient.R().SetFormData(data).Get(url)
+	defer request.addLogger(response, err)
 	if err != nil {
 		return gjson.Result{}, err
 	}
@@ -108,7 +119,7 @@ func (cat *Ciweimao) GetAPI(url string, data map[string]string) (gjson.Result, e
 		return gjson.Result{}, errors.New("responseText is empty, please check your network")
 	}
 	if !gjson.Valid(responseText) {
-		responseText, err = cat.DecodeEncryptText(response.String(), decodeKey)
+		responseText, err = request.DecodeEncryptText(response.String(), decodeKey)
 		if err != nil {
 			return gjson.Result{}, err
 		}
@@ -150,17 +161,17 @@ func PKCS7UnPadding(plainText []byte) []byte {
 	return plainText[:(length - unpadding)]
 }
 
-func (cat *Ciweimao) DecodeEncryptText(str string, decodeKey string) (string, error) {
+func (request *CiweimaoRequest) DecodeEncryptText(str string, decodeKey string) (string, error) {
 	if decodeKey == "" {
-		return str, nil
+		return "", errors.New("解密密钥为空,请检查解密密钥是否正确")
 	}
 	decoded, err := base64.StdEncoding.DecodeString(str)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("base64 decode error: %s", err.Error())
 	}
 	raw, err := aesDecrypt(decodeKey, decoded)
 	if err != nil {
-		return "", err
+		return "", errors.New("解密失败,请检查解密密钥是否正确")
 	}
 	if len(raw) == 0 {
 		return "", errors.New("解密内容为空,请检查解密内容内容是否正确")
