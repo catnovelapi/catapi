@@ -83,7 +83,7 @@ func (request *CiweimaoRequest) PostAPI(url string, data map[string]string) (gjs
 	if data == nil {
 		data = map[string]string{}
 	}
-	response, err := request.BuilderClient.R().SetFormData(data).Post(baseUrl + url)
+	response, err := request.BuilderClient.R().SetFormData(data).Post(url)
 	defer request.addLogger(response, err)
 	if err != nil {
 		return gjson.Result{}, err
@@ -107,7 +107,7 @@ func (request *CiweimaoRequest) GetAPI(url string, data map[string]string) (gjso
 	if data == nil {
 		data = map[string]string{}
 	}
-	response, err := request.BuilderClient.R().SetFormData(data).Get(baseUrl + url)
+	response, err := request.BuilderClient.R().SetFormData(data).Get(url)
 	defer request.addLogger(response, err)
 	if err != nil {
 		return gjson.Result{}, err

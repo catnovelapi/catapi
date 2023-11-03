@@ -1,7 +1,6 @@
 package catapi
 
 import (
-	"github.com/catnovelapi/catapi/options"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -15,11 +14,10 @@ func TestNewCiweimaoClient(t *testing.T) {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	client := NewCiweimaoClient(
-		options.Debug(),
-		options.Proxy(os.Getenv("PROXY")),
-		options.Auth(os.Getenv("CAT_ACCOUNT"), os.Getenv("CAT_LOGIN_TOKEN")),
-	)
+	client := NewCiweimaoClient().
+		SetDebug().
+		SetProxy(os.Getenv("PROXY")).
+		SetAuth(os.Getenv("CAT_ACCOUNT"), os.Getenv("CAT_LOGIN_TOKEN"))
 	//bookInfo, err := client.Ciweimao.BookInfoApiByBookId("")
 	//if err != nil {
 	//	t.Error(err)

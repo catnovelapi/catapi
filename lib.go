@@ -2,7 +2,6 @@ package catapi
 
 import (
 	"github.com/catnovelapi/catapi/catapi"
-	"github.com/catnovelapi/catapi/options"
 	"github.com/go-resty/resty/v2"
 	"log"
 	"os"
@@ -15,15 +14,12 @@ type CiweimaoClient struct {
 	Ciweimao *catapi.Ciweimao
 }
 
-func NewCiweimaoClient(options ...options.CiweimaoRequestOption) *CiweimaoClient {
-	client := &CiweimaoClient{&catapi.Ciweimao{
-		Req: &catapi.CiweimaoRequest{
-			BuilderClient: resty.New().SetRetryCount(5),
-			Debug:         false, Version: "2.9.290"},
-	}}
-	for _, option := range options {
-
-		option.Apply(client.Ciweimao.Req)
+func NewCiweimaoClient() *CiweimaoClient {
+	client := &CiweimaoClient{&catapi.Ciweimao{}}
+	client.Ciweimao.Req = &catapi.CiweimaoRequest{
+		Debug:         false,
+		Version:       "2.9.290",
+		BuilderClient: resty.New().SetRetryCount(7).SetBaseURL("https://app.hbooker.com"),
 	}
 	if client.Ciweimao.Req.Debug {
 		client.Ciweimao.Req.BuilderClient.SetDebug(client.Ciweimao.Req.Debug)
@@ -45,4 +41,30 @@ func NewCiweimaoClient(options ...options.CiweimaoRequestOption) *CiweimaoClient
 
 	client.Ciweimao.Req.BuilderClient.SetHeaders(map[string]string{"User-Agent": useragent + client.Ciweimao.Req.Version})
 	return client
+}
+
+func (ciweimaoClient *CiweimaoClient) SetVersion(version string) *CiweimaoClient {
+	ciweimaoClient.Ciweimao.Req.Version = version
+	return ciweimaoClient
+}
+
+func (ciweimaoClient *CiweimaoClient) SetDebug() *CiweimaoClient {
+	ciweimaoClient.Ciweimao.Req.Debug = true
+	return ciweimaoClient
+}
+func (ciweimaoClient *CiweimaoClient) SetProxy(proxy string) *CiweimaoClient {
+	ciweimaoClient.Ciweimao.Req.Proxy = proxy
+	return ciweimaoClient
+}
+func (ciweimaoClient *CiweimaoClient) SetLoginToken(loginToken string) *CiweimaoClient {
+	ciweimaoClient.Ciweimao.Req.LoginToken = loginToken
+	return ciweimaoClient
+
+}
+func (ciweimaoClient *CiweimaoClient) SetAccount(account string) *CiweimaoClient {
+	ciweimaoClient.Ciweimao.Req.Account = account
+	return ciweimaoClient
+}
+func (ciweimaoClient *CiweimaoClient) SetAuth(account, loginToken string) *CiweimaoClient {
+	return ciweimaoClient.SetAccount(account).SetLoginToken(loginToken)
 }
