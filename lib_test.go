@@ -26,7 +26,7 @@ func TestNewCiweimaoSearchBooks(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	for _, book := range searchByKeywordApi.Get("data").Array() {
+	for _, book := range searchByKeywordApi.Get("data.book_list").Array() {
 		println(book.Get("book_id").String())
 		println(book.Get("book_name").String())
 	}
