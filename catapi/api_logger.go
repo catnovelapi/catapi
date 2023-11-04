@@ -1,6 +1,7 @@
 package catapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/tidwall/gjson"
@@ -10,83 +11,104 @@ import (
 
 type ApiLogger struct {
 	c        *CiweimaoRequest
+	builder  *strings.Builder
 	response *resty.Response
 }
 
 func NewApiLogger(response *resty.Response, c *CiweimaoRequest) *ApiLogger {
-	return &ApiLogger{c: c, response: response}
+	return &ApiLogger{c: c, response: response, builder: &strings.Builder{}}
 }
 
-func (apiLogger *ApiLogger) addLogger(err error) {
+func (apiLogger *ApiLogger) addLogger(err error) error {
 	if !apiLogger.c.Debug {
-		return
+		return nil
 	}
-	var builder strings.Builder
-	builder.WriteString("Response Info:\n")
+	apiLogger.builder.WriteString("\nResponse Info:\n")
 	if err != nil {
-		fmt.Fprintf(&builder, "  Error: %s\n", err.Error())
+		apiLogger.builder.WriteString(fmt.Sprintf("  Error: %s\n", err.Error()))
 	}
-	apiLogger.addStatus(&builder)
-	apiLogger.addHeader(&builder)
-	apiLogger.addCookies(&builder)
-	apiLogger.addForm(&builder)
-	apiLogger.addResult(&builder)
-	builder.WriteString("============================================================\n")
-	_, err = apiLogger.c.FileLog.WriteString(builder.String())
+	apiLogger.addStatus()
+	apiLogger.addHeader()
+	apiLogger.addCookies()
+	apiLogger.addForm()
+	apiLogger.addResult()
+	return apiLogger.saveLogToFile()
+}
+
+func (apiLogger *ApiLogger) saveLogToFile() error {
+	apiLogger.builder.WriteString("============================================================END\n")
+	_, err := apiLogger.c.FileLog.WriteString(apiLogger.builder.String())
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
+	return nil
 }
-func (apiLogger *ApiLogger) addStatus(builder *strings.Builder) {
-	fmt.Fprintf(builder, "  Status Code: %d\n", apiLogger.response.StatusCode())
-	fmt.Fprintf(builder, "  Status : %s\n", apiLogger.response.Status())
-	fmt.Fprintf(builder, "  Proto      :%s\n", apiLogger.response.Proto())
-	fmt.Fprintf(builder, "  Time	   :%s\n", apiLogger.response.Time())
-	fmt.Fprintf(builder, "  Received At:%s\n", apiLogger.response.Time())
+
+func (apiLogger *ApiLogger) addStatus() {
+	apiLogger.builder.WriteString(fmt.Sprintf(
+		"  Status Code: %d\n  Status : %s\n  Proto: %s\n  Time: %s\n  Received At: %s\n",
+		apiLogger.response.StatusCode(),
+		apiLogger.response.Status(),
+		apiLogger.response.Proto(),
+		apiLogger.response.Time(),
+		apiLogger.response.Time(),
+	))
 }
-func (apiLogger *ApiLogger) addHeader(builder *strings.Builder) {
+func (apiLogger *ApiLogger) addHeader() {
 	if len(apiLogger.response.Header()) > 0 {
-		builder.WriteString("  Header:\n")
+		apiLogger.builder.WriteString("  Header:\n")
 		for k, v := range apiLogger.response.Header() {
-			fmt.Fprintf(builder, "    Header     : %s=%s\n", k, v)
+			fmt.Fprintf(apiLogger.builder, "    Header     : %s=%s\n", k, v)
 		}
 	}
 }
 
-func (apiLogger *ApiLogger) addCookies(builder *strings.Builder) {
+func (apiLogger *ApiLogger) addCookies() {
 	if len(apiLogger.response.Cookies()) > 0 {
-		builder.WriteString("  Cookies:\n")
+		apiLogger.builder.WriteString("  Cookies:\n")
 		for _, cookie := range apiLogger.response.Cookies() {
-			fmt.Fprintf(builder, "    Cookie     : %s=%s\n", cookie.Name, cookie.Value)
+			fmt.Fprintf(apiLogger.builder, "    Cookie     : %s=%s\n", cookie.Name, cookie.Value)
 		}
 	}
 }
 
-func (apiLogger *ApiLogger) addForm(builder *strings.Builder) {
+func (apiLogger *ApiLogger) addForm() {
 	if apiLogger.response.Request.FormData != nil {
-		builder.WriteString("  Form:\n")
+		apiLogger.builder.WriteString("  Form:\n")
 		for k, v := range apiLogger.response.Request.FormData {
-			fmt.Fprintf(builder, "    Form       : %s=%s\n", k, v)
+			fmt.Fprintf(apiLogger.builder, "    Form       : %s=%s\n", k, v)
 		}
 	}
 }
-
-func (apiLogger *ApiLogger) addResult(builder *strings.Builder) {
+func (apiLogger *ApiLogger) addResult() {
 	result := string(apiLogger.response.Body())
 	if result == "" {
-		fmt.Fprintf(builder, "  Result       :\n %s\n", "empty")
+		fmt.Fprintf(apiLogger.builder, "  Result       :\n %s\n", "empty")
 		return
 	}
-	if gjson.Valid(result) {
-		fmt.Fprintf(builder, "  Result       :\n %s\n", result)
-		return
+	var err error
+	var jsonString string
+	if !gjson.Valid(result) {
+		jsonString, err = apiLogger.c.DecodeEncryptText(result, decodeKey)
+		if err != nil {
+			fmt.Fprintf(apiLogger.builder, "  Decode Error: %s\n", err.Error())
+			fmt.Fprintf(apiLogger.builder, "  Result       :\n %s\n", result)
+			return
+		}
 	}
-	result, err := apiLogger.c.DecodeEncryptText(result, decodeKey)
+	fmt.Fprintf(apiLogger.builder, "  Result       :\n %s\n", IndentJson(jsonString))
+}
+func IndentJson(a string) string {
+	var objmap map[string]*json.RawMessage
+	err := json.Unmarshal([]byte(a), &objmap)
 	if err != nil {
-		fmt.Fprintf(builder, "  Decode Error: %s\n", err.Error())
-		fmt.Fprintf(builder, "  Result       :\n %s\n", result)
-	} else {
-		fmt.Fprintf(builder, "  Result       :\n %s\n", result)
+		log.Println(err)
+		return a + "\n" + err.Error()
 	}
+	formatted, err := json.MarshalIndent(objmap, "", "  ")
+	if err != nil {
+		return a + "\n" + err.Error()
+	}
+	return string(formatted)
 }
