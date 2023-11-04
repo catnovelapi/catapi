@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/tidwall/gjson"
-	"log"
 	"os"
 )
 
@@ -25,65 +24,23 @@ type CiweimaoRequest struct {
 
 const decodeKey = "zG2nSeEfSHfvTCHy5LCcqtBbQehKNLXn"
 
-func (request *CiweimaoRequest) addLogger(resp *resty.Response, err error) {
-	if !request.Debug {
-		return
-	}
-	var responseInfo string
-	responseInfo = "Response Info:\n"
-	if err != nil {
-		responseInfo += fmt.Sprintf("  Error: %s\n", err.Error())
-	}
-	responseInfo += fmt.Sprintf("  Status Code: %d\n", resp.StatusCode())
-	responseInfo += fmt.Sprintf("  Status : %s\n", resp.Status())
-	responseInfo += fmt.Sprintf("  Proto      :%s\n", resp.Proto())
-	responseInfo += fmt.Sprintf("  Time	   :%s\n", resp.Time())
-	responseInfo += fmt.Sprintf("  Received At:%s\n", resp.Time())
-	if len(resp.Header()) > 0 {
-		responseInfo += fmt.Sprintf("  Header:\n")
-		for k, v := range resp.Header() {
-			responseInfo += fmt.Sprintf("    Header     : %s=%s\n", k, v)
-		}
-	}
-	if len(resp.Cookies()) > 0 {
-		responseInfo += fmt.Sprintf("  Cookies:\n")
-		for _, cookie := range resp.Cookies() {
-			responseInfo += fmt.Sprintf("    Cookie     : %s=%s\n", cookie.Name, cookie.Value)
-		}
-	}
-	if resp.Request.FormData != nil {
-		responseInfo += fmt.Sprintf("  Form:\n")
-		for k, v := range resp.Request.FormData {
-			responseInfo += fmt.Sprintf("    Form       : %s=%s\n", k, v)
-		}
-	}
-	result := string(resp.Body())
-	if result != "" {
-		if gjson.Valid(result) {
-			responseInfo += fmt.Sprintf("  Result       :\n %s\n", result)
-		} else {
-			result, err = request.DecodeEncryptText(result, decodeKey)
-			if err != nil {
-				responseInfo += fmt.Sprintf("  Decode Error: %s\n", err.Error())
-				responseInfo += fmt.Sprintf("  Result       :\n %s\n", result)
-			} else {
-				responseInfo += fmt.Sprintf("  Result       :\n %s\n", result)
-			}
-		}
-	}
-	responseInfo += fmt.Sprintf("============================================================\n")
-	_, err = request.FileLog.WriteString(responseInfo)
-	if err != nil {
-		log.Println(err)
-		return
+func (request *CiweimaoRequest) getDefaultAuthenticationFormData() map[string]string {
+	return map[string]string{
+		"device_token": "ciweimao_",
+		"app_version":  request.Version,
+		"login_token":  request.LoginToken,
+		"account":      request.Account,
 	}
 }
 func (request *CiweimaoRequest) PostAPI(url string, data map[string]string) (gjson.Result, error) {
-	if data == nil {
-		data = map[string]string{}
+	formData := request.getDefaultAuthenticationFormData()
+	if data != nil {
+		for k, v := range data {
+			formData[k] = v
+		}
 	}
-	response, err := request.BuilderClient.R().SetFormData(data).Post(url)
-	defer request.addLogger(response, err)
+	response, err := request.BuilderClient.R().SetFormData(formData).Post(url)
+	defer NewApiLogger(response, request).addLogger(err)
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("request error: %s", err.Error())
 	}
@@ -103,11 +60,14 @@ func (request *CiweimaoRequest) PostAPI(url string, data map[string]string) (gjs
 	return gjson.Parse(responseText), nil
 }
 func (request *CiweimaoRequest) GetAPI(url string, data map[string]string) (gjson.Result, error) {
-	if data == nil {
-		data = map[string]string{}
+	formData := request.getDefaultAuthenticationFormData()
+	if data != nil {
+		for k, v := range data {
+			formData[k] = v
+		}
 	}
-	response, err := request.BuilderClient.R().SetFormData(data).Get(url)
-	defer request.addLogger(response, err)
+	response, err := request.BuilderClient.R().SetFormData(formData).Get(url)
+	defer NewApiLogger(response, request).addLogger(err)
 	if err != nil {
 		return gjson.Result{}, err
 	}

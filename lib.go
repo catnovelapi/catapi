@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-const deviceToken = "ciweimao_"
 const useragent = "Android com.kuangxiangciweimao.novel "
 
 type CiweimaoClient struct {
@@ -26,13 +25,6 @@ func NewCiweimaoClient() *CiweimaoClient {
 	if client.Ciweimao.Req.Proxy != "" {
 		client.Ciweimao.Req.BuilderClient.SetProxy(client.Ciweimao.Req.Proxy)
 	}
-	client.Ciweimao.Req.BuilderClient.SetFormData(map[string]string{
-		"device_token": deviceToken,
-		"app_version":  client.Ciweimao.Req.Version,
-		"login_token":  client.Ciweimao.Req.LoginToken,
-		"account":      client.Ciweimao.Req.Account,
-	})
-
 	client.Ciweimao.Req.BuilderClient.SetHeaders(map[string]string{"User-Agent": useragent + client.Ciweimao.Req.Version})
 	return client
 }
@@ -65,17 +57,22 @@ func (ciweimaoClient *CiweimaoClient) SetLoginToken(loginToken string) *Ciweimao
 	return ciweimaoClient
 
 }
-
-func UnescapeUnicode(raw []byte) ([]byte, error) {
-	str, err := strconv.Unquote(strings.Replace(strconv.Quote(string(raw)), `\\u`, `\u`, -1))
+func UnescapeUnicode(raw string) (string, error) {
+	str, err := strconv.Unquote(strings.Replace(strconv.Quote(raw), `\\u`, `\u`, -1))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return []byte(str), nil
+	return str, nil
 }
 
 func (ciweimaoClient *CiweimaoClient) SetAccount(account string) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.Account = account
+	if unescapeUnicode, err := UnescapeUnicode(account); err != nil {
+		log.Println("set account error", err)
+	} else if !strings.Contains(unescapeUnicode, "书客") {
+		log.Println("set account error:", "account is not contains 书客")
+	} else {
+		ciweimaoClient.Ciweimao.Req.Account = unescapeUnicode
+	}
 	return ciweimaoClient
 }
 func (ciweimaoClient *CiweimaoClient) SetAuth(account, loginToken string) *CiweimaoClient {
