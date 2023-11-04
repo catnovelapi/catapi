@@ -53,7 +53,7 @@ func (cat *Ciweimao) SearchByKeywordApi(keyword, page string) (gjson.Result, err
 }
 
 func (cat *Ciweimao) SearchByTagApi(tagName, page string) (gjson.Result, error) {
-	return cat.Req.PostAPI(searchBookApiPoint, map[string]string{"count": "10", "page": page, "category_index": "0", "key": tagName})
+	return cat.Req.PostAPI(searchBookTagApiPoint, map[string]string{"count": "10", "page": page, "type": "0", "tag": tagName})
 }
 func (cat *Ciweimao) SignupApi(account string, password string) (gjson.Result, error) {
 	return cat.Req.PostAPI(loginApiPoint, map[string]string{"login_name": account, "passwd": password})

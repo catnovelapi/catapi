@@ -2,6 +2,7 @@ package catapi
 
 const baseUrl = "https://app.hbooker.com"
 const searchBookApiPoint = "/bookcity/get_filter_search_book_list"
+const searchBookTagApiPoint = "/bookcity/get_tag_book_list"
 const chapterCommandApiPoint = "/chapter/get_chapter_command"
 const chapterInfoApiPoint = "/chapter/get_cpt_ifm"
 const bookInfoApiPoint = "/book/get_info_by_id"
