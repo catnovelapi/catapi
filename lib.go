@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-const deviceToken = "ciweimao_"
 const useragent = "Android com.kuangxiangciweimao.novel "
 
 type CiweimaoClient struct {
@@ -26,13 +25,6 @@ func NewCiweimaoClient() *CiweimaoClient {
 	if client.Ciweimao.Req.Proxy != "" {
 		client.Ciweimao.Req.BuilderClient.SetProxy(client.Ciweimao.Req.Proxy)
 	}
-	client.Ciweimao.Req.BuilderClient.SetFormData(map[string]string{
-		"device_token": deviceToken,
-		"app_version":  client.Ciweimao.Req.Version,
-		"login_token":  client.Ciweimao.Req.LoginToken,
-		"account":      client.Ciweimao.Req.Account,
-	})
-
 	client.Ciweimao.Req.BuilderClient.SetHeaders(map[string]string{"User-Agent": useragent + client.Ciweimao.Req.Version})
 	return client
 }

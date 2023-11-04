@@ -25,6 +25,14 @@ type CiweimaoRequest struct {
 
 const decodeKey = "zG2nSeEfSHfvTCHy5LCcqtBbQehKNLXn"
 
+func (request *CiweimaoRequest) SetDefaultFormData() map[string]string {
+	return map[string]string{
+		"device_token": "ciweimao_",
+		"app_version":  request.Version,
+		"login_token":  request.LoginToken,
+		"account":      request.Account,
+	}
+}
 func (request *CiweimaoRequest) addLogger(resp *resty.Response, err error) {
 	if !request.Debug {
 		return
@@ -79,10 +87,13 @@ func (request *CiweimaoRequest) addLogger(resp *resty.Response, err error) {
 	}
 }
 func (request *CiweimaoRequest) PostAPI(url string, data map[string]string) (gjson.Result, error) {
-	if data == nil {
-		data = map[string]string{}
+	formData := request.SetDefaultFormData()
+	if data != nil {
+		for k, v := range data {
+			formData[k] = v
+		}
 	}
-	response, err := request.BuilderClient.R().SetFormData(data).Post(url)
+	response, err := request.BuilderClient.R().SetFormData(formData).Post(url)
 	defer request.addLogger(response, err)
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("request error: %s", err.Error())
@@ -103,10 +114,13 @@ func (request *CiweimaoRequest) PostAPI(url string, data map[string]string) (gjs
 	return gjson.Parse(responseText), nil
 }
 func (request *CiweimaoRequest) GetAPI(url string, data map[string]string) (gjson.Result, error) {
-	if data == nil {
-		data = map[string]string{}
+	formData := request.SetDefaultFormData()
+	if data != nil {
+		for k, v := range data {
+			formData[k] = v
+		}
 	}
-	response, err := request.BuilderClient.R().SetFormData(data).Get(url)
+	response, err := request.BuilderClient.R().SetFormData(formData).Get(url)
 	defer request.addLogger(response, err)
 	if err != nil {
 		return gjson.Result{}, err
