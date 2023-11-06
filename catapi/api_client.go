@@ -15,7 +15,6 @@ import (
 type CiweimaoRequest struct {
 	Debug         bool
 	FileLog       *os.File
-	Proxy         string
 	Version       string
 	LoginToken    string
 	Account       string

@@ -22,9 +22,6 @@ func NewCiweimaoClient() *CiweimaoClient {
 		Version:       "2.9.290",
 		BuilderClient: resty.New().SetRetryCount(7).SetBaseURL("https://app.hbooker.com"),
 	}
-	if client.Ciweimao.Req.Proxy != "" {
-		client.Ciweimao.Req.BuilderClient.SetProxy(client.Ciweimao.Req.Proxy)
-	}
 	client.Ciweimao.Req.BuilderClient.SetHeaders(map[string]string{"User-Agent": useragent + client.Ciweimao.Req.Version})
 	return client
 }
@@ -45,7 +42,7 @@ func (ciweimaoClient *CiweimaoClient) SetDebug() *CiweimaoClient {
 	return ciweimaoClient
 }
 func (ciweimaoClient *CiweimaoClient) SetProxy(proxy string) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.Proxy = proxy
+	ciweimaoClient.Ciweimao.Req.BuilderClient.SetProxy(proxy)
 	return ciweimaoClient
 }
 func (ciweimaoClient *CiweimaoClient) SetLoginToken(loginToken string) *CiweimaoClient {

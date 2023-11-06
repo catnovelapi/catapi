@@ -19,9 +19,9 @@ func NewApiLogger(response *resty.Response, c *CiweimaoRequest) *ApiLogger {
 	return &ApiLogger{c: c, response: response, builder: &strings.Builder{}}
 }
 
-func (apiLogger *ApiLogger) addLogger(err error) error {
+func (apiLogger *ApiLogger) addLogger(err error) {
 	if !apiLogger.c.Debug {
-		return nil
+		return
 	}
 	apiLogger.builder.WriteString("\nResponse Info:\n")
 	if err != nil {
@@ -32,7 +32,10 @@ func (apiLogger *ApiLogger) addLogger(err error) error {
 	apiLogger.addCookies()
 	apiLogger.addForm()
 	apiLogger.addResult()
-	return apiLogger.saveLogToFile()
+
+	if err = apiLogger.saveLogToFile(); err != nil {
+		log.Println(err)
+	}
 }
 
 func (apiLogger *ApiLogger) saveLogToFile() error {
@@ -59,7 +62,7 @@ func (apiLogger *ApiLogger) addHeader() {
 	if len(apiLogger.response.Header()) > 0 {
 		apiLogger.builder.WriteString("  Header:\n")
 		for k, v := range apiLogger.response.Header() {
-			fmt.Fprintf(apiLogger.builder, "    Header     : %s=%s\n", k, v)
+			apiLogger.builder.WriteString(fmt.Sprintf("    Header     : %s=%s\n", k, v))
 		}
 	}
 }
@@ -68,7 +71,7 @@ func (apiLogger *ApiLogger) addCookies() {
 	if len(apiLogger.response.Cookies()) > 0 {
 		apiLogger.builder.WriteString("  Cookies:\n")
 		for _, cookie := range apiLogger.response.Cookies() {
-			fmt.Fprintf(apiLogger.builder, "    Cookie     : %s=%s\n", cookie.Name, cookie.Value)
+			apiLogger.builder.WriteString(fmt.Sprintf("    Cookie     : %s=%s\n", cookie.Name, cookie.Value))
 		}
 	}
 }
@@ -77,14 +80,14 @@ func (apiLogger *ApiLogger) addForm() {
 	if apiLogger.response.Request.FormData != nil {
 		apiLogger.builder.WriteString("  Form:\n")
 		for k, v := range apiLogger.response.Request.FormData {
-			fmt.Fprintf(apiLogger.builder, "    Form       : %s=%s\n", k, v)
+			apiLogger.builder.WriteString(fmt.Sprintf("    Form       : %s=%s\n", k, v))
 		}
 	}
 }
 func (apiLogger *ApiLogger) addResult() {
 	result := string(apiLogger.response.Body())
 	if result == "" {
-		fmt.Fprintf(apiLogger.builder, "  Result       :\n %s\n", "empty")
+		apiLogger.builder.WriteString(fmt.Sprintf("  Result       :\n %s\n", "empty"))
 		return
 	}
 	var err error
@@ -92,12 +95,12 @@ func (apiLogger *ApiLogger) addResult() {
 	if !gjson.Valid(result) {
 		jsonString, err = apiLogger.c.DecodeEncryptText(result, decodeKey)
 		if err != nil {
-			fmt.Fprintf(apiLogger.builder, "  Decode Error: %s\n", err.Error())
-			fmt.Fprintf(apiLogger.builder, "  Result       :\n %s\n", result)
+			apiLogger.builder.WriteString(fmt.Sprintf("  Decode Error: %s\n", err.Error()))
+			apiLogger.builder.WriteString(fmt.Sprintf("  Result       :\n %s\n", result))
 			return
 		}
 	}
-	fmt.Fprintf(apiLogger.builder, "  Result       :\n %s\n", IndentJson(jsonString))
+	apiLogger.builder.WriteString(fmt.Sprintf("  Result       :\n %s\n", IndentJson(jsonString)))
 }
 func IndentJson(a string) string {
 	var objmap map[string]*json.RawMessage
