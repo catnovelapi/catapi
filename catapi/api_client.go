@@ -41,9 +41,6 @@ func (request *CiweimaoRequest) PostAPI(url string, data map[string]string) (gjs
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("request error: %s", err.Error())
 	}
-	if response.StatusCode() != 200 {
-		return gjson.Result{}, errors.New("status error: " + response.Status())
-	}
 	responseText := response.String()
 	if responseText == "" {
 		return gjson.Result{}, errors.New("responseText is empty, please check your network")
@@ -54,19 +51,17 @@ func (request *CiweimaoRequest) PostAPI(url string, data map[string]string) (gjs
 			return gjson.Result{}, fmt.Errorf("decode error: %s", err.Error())
 		}
 	}
-	return gjson.Parse(responseText), nil
+	gjsonResponseText := gjson.Parse(responseText)
+	if gjsonResponseText.Get("code").String() != "100000" {
+		return gjson.Result{}, fmt.Errorf("response error: %s", gjsonResponseText.Get("tip").String())
+	}
+	return gjsonResponseText, nil
 }
 
 // SHA256 sha256 编码
 func SHA256(data []byte) []byte {
 	ret := sha256.Sum256(data)
 	return ret[:]
-}
-
-// LoadKey 读取解密密钥
-func LoadKey(EncryptKey string) []byte {
-	Key := SHA256([]byte(EncryptKey))
-	return Key[:32]
 }
 
 func aesDecrypt(EncryptKey string, ciphertext []byte) ([]byte, error) {

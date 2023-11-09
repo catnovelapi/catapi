@@ -22,15 +22,24 @@ func (cat *Ciweimao) DownloadCover(url string) ([]byte, error) {
 	return nil, fmt.Errorf("download cover error:%s\nurl:%s\n", "retry 5 times", url)
 }
 func (cat *Ciweimao) AccountInfoApi() (gjson.Result, error) {
-	return cat.Req.PostAPI(accountInfoApiPoint, nil)
+	if accountInfo, err := cat.Req.PostAPI(accountInfoApiPoint, nil); err != nil {
+		return gjson.Result{}, err
+	} else {
+		return accountInfo.Get("data.reader_info"), nil
+	}
 }
 
+// Deprecated: use ChaptersCatalogV2Api instead
 func (cat *Ciweimao) ChaptersCatalogApi(bookId string) (gjson.Result, error) {
 	return cat.Req.PostAPI(catalogApiPoint, map[string]string{"book_id": bookId})
 }
 
 func (cat *Ciweimao) ChaptersCatalogV2Api(bookId string) (gjson.Result, error) {
-	return cat.Req.PostAPI(catalogNewApiPoint, map[string]string{"book_id": bookId})
+	if catalog, err := cat.Req.PostAPI(catalogNewApiPoint, map[string]string{"book_id": bookId}); err != nil {
+		return gjson.Result{}, err
+	} else {
+		return catalog.Get("data.chapter_list"), nil
+	}
 }
 
 func (cat *Ciweimao) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
@@ -39,9 +48,7 @@ func (cat *Ciweimao) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
 	}
 	bookInfo, err := cat.Req.PostAPI(bookInfoApiPoint, map[string]string{"book_id": bookId})
 	if err != nil {
-		return gjson.Result{}, err
-	} else if bookInfo.Get("data.book_info.book_id").String() == "" {
-		return gjson.Result{}, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, "bookInfo is empty")
+		return gjson.Result{}, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, err.Error())
 	} else {
 		return bookInfo.Get("data.book_info"), nil
 	}
@@ -75,8 +82,6 @@ func (cat *Ciweimao) SignupApi(account string, password string) (gjson.Result, e
 func (cat *Ciweimao) ChapterCommandApi(chapterId string) (string, error) {
 	if commandInfo, err := cat.Req.PostAPI(chapterCommandApiPoint, map[string]string{"chapter_id": chapterId}); err != nil {
 		return "", fmt.Errorf("ChapterID:%s,获取章节command失败,tips:%s", chapterId, err.Error())
-	} else if commandInfo.Get("data.command").String() == "" {
-		return "", fmt.Errorf("ChapterID:%s,获取章节command失败,tips:%s", chapterId, "command is empty")
 	} else {
 		return commandInfo.Get("data.command").String(), nil
 	}
