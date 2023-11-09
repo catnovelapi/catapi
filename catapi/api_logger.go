@@ -93,7 +93,7 @@ func (apiLogger *ApiLogger) addResult() {
 	var err error
 	var jsonString string
 	if !gjson.Valid(result) {
-		jsonString, err = apiLogger.c.DecodeEncryptText(result, decodeKey)
+		jsonString, err = apiLogger.c.DecodeEncryptText(result, "")
 		if err != nil {
 			apiLogger.builder.WriteString(fmt.Sprintf("  Decode Error: %s\n", err.Error()))
 			apiLogger.builder.WriteString(fmt.Sprintf("  Result       :\n %s\n", result))
