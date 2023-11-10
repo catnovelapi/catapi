@@ -26,12 +26,28 @@ func TestNewCiweimaoSearchBooks(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	for _, book := range searchByKeywordApi.Get("data.book_list").Array() {
+	for _, book := range searchByKeywordApi {
 		println(book.Get("book_id").String())
 		println(book.Get("book_name").String())
 	}
 }
+func TestUserInfo(t *testing.T) {
+	accountInfo, err := client.Ciweimao.AccountInfoApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(accountInfo.String())
+}
 
+func TestChapterList(t *testing.T) {
+	chaptersCatalog, err := client.Ciweimao.ChaptersCatalogV2Api(os.Getenv("BOOK_ID"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(chaptersCatalog.String())
+}
 func TestCiweimaoBookInfo(t *testing.T) {
 	bookInfo, err := client.Ciweimao.BookInfoApiByBookId(os.Getenv("BOOK_ID"))
 	if err != nil {
@@ -39,4 +55,13 @@ func TestCiweimaoBookInfo(t *testing.T) {
 		return
 	}
 	fmt.Println(bookInfo.String())
+}
+
+func TestCiweimaoChapterInfo(t *testing.T) {
+	chapterInfo, err := client.Ciweimao.ChapterInfoApi(os.Getenv("CHAPTER_ID"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(chapterInfo.String())
 }
