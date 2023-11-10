@@ -87,15 +87,16 @@ func (cat *Ciweimao) ChapterCommandApi(chapterId string) (string, error) {
 	}
 }
 
-func (cat *Ciweimao) ChapterInfoApi(chapterId string, command string) (gjson.Result, error) {
-	if command == "" {
-		var err error
-		command, err = cat.ChapterCommandApi(chapterId)
-		if err != nil {
-			return gjson.Result{}, fmt.Errorf("ChapterTitle:%s,获取章节command失败,tips:%s", chapterId, err.Error())
-		}
+func (cat *Ciweimao) ChapterInfoApi(chapterId string) (gjson.Result, error) {
+	command, err := cat.ChapterCommandApi(chapterId)
+	if err != nil {
+		return gjson.Result{}, fmt.Errorf("ChapterTitle:%s,获取章节command失败,tips:%s", chapterId, err.Error())
 	}
-	return cat.Req.PostAPI(chapterInfoApiPoint, map[string]string{"chapter_id": chapterId, "chapter_command": command})
+	chapterInfo, err := cat.Req.PostAPI(chapterInfoApiPoint, map[string]string{"chapter_id": chapterId, "chapter_command": command})
+	if err != nil {
+		return gjson.Result{}, err
+	}
+	return chapterInfo.Get("data.chapter_info"), nil
 }
 
 func (cat *Ciweimao) AutoRegV2Api(android string) (gjson.Result, error) {
