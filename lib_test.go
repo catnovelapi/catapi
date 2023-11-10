@@ -56,3 +56,12 @@ func TestCiweimaoBookInfo(t *testing.T) {
 	}
 	fmt.Println(bookInfo.String())
 }
+
+func TestCiweimaoChapterInfo(t *testing.T) {
+	chapterInfo, err := client.Ciweimao.ChapterInfoApi(os.Getenv("CHAPTER_ID"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(chapterInfo.String())
+}

@@ -110,8 +110,12 @@ func (cat *Ciweimao) BookShelfListApi(shelfId string) (gjson.Result, error) {
 	return cat.Req.PostAPI(bookshelfBookListApiPoint, map[string]string{"shelf_id": shelfId, "last_mod_time": "0", "direction": "prev"})
 }
 
-func (cat *Ciweimao) UseGeetestInfoApi(loginName string) (gjson.Result, error) {
-	return cat.Req.PostAPI(useGeetestApiPoint, map[string]string{"login_name": loginName})
+func (cat *Ciweimao) UseGeetestInfoApi(loginName string) (int, error) {
+	useGeetest, err := cat.Req.PostAPI(useGeetestApiPoint, map[string]string{"login_name": loginName})
+	if err != nil {
+		return 0, err
+	}
+	return int(useGeetest.Get("data.need_use_geetest").Int()), nil
 }
 func (cat *Ciweimao) BookmarkListApi(bookID string, page string) (gjson.Result, error) {
 	return cat.Req.PostAPI("/book/get_bookmark_list", map[string]string{"count": "10", "book_id": bookID, "page": page})
