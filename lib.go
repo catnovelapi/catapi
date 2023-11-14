@@ -10,23 +10,31 @@ import (
 )
 
 type CiweimaoClient struct {
-	Ciweimao *catapi.Ciweimao
+	defBaseURL       string
+	defaultUserAgent string
+	defaultVersion   string
+	Ciweimao         *catapi.Ciweimao
 }
 
 func NewCiweimaoClient() *CiweimaoClient {
 	client := &CiweimaoClient{
+		defaultVersion:   "2.9.290",
+		defBaseURL:       "https://app.hbooker.com",
+		defaultUserAgent: "Android com.kuangxiangciweimao.novel",
 		Ciweimao: &catapi.Ciweimao{
 			Req: &catapi.CiweimaoRequest{Debug: false, BuilderClient: resty.New()},
 		},
 	}
-	client.SetRetryCount(7)
-	client.SetBaseURL("https://app.hbooker.com").SetVersion("2.9.290").
-		SetUserAgent("Android com.kuangxiangciweimao.novel")
+	client.SetRetryCount(7).
+		SetBaseURL(client.defBaseURL).
+		SetVersion(client.defaultVersion).
+		SetUserAgent(client.defaultUserAgent)
 
 	if version, err := client.Ciweimao.GetVersionApi(); err == nil {
 		client.SetVersion(version)
 	}
-	client.SetUserAgent("Android com.kuangxiangciweimao.novel")
+	// refresh user agent
+	client.SetUserAgent(client.defaultUserAgent)
 	return client
 }
 
