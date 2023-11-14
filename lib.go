@@ -20,14 +20,12 @@ func NewCiweimaoClient() *CiweimaoClient {
 		},
 	}
 	client.SetRetryCount(7)
-	client.SetBaseURL("https://app.hbooker.com").SetUserAgent("Android")
-	var versionNumber string
-	if version, err := client.Ciweimao.GetVersionApi(); err != nil {
-		versionNumber = "2.9.290"
-	} else {
-		versionNumber = version
+	client.SetBaseURL("https://app.hbooker.com").SetVersion("2.9.290").
+		SetUserAgent("Android com.kuangxiangciweimao.novel")
+
+	if version, err := client.Ciweimao.GetVersionApi(); err == nil {
+		client.SetVersion(version)
 	}
-	client.SetVersion(versionNumber)
 	client.SetUserAgent("Android com.kuangxiangciweimao.novel")
 	return client
 }
