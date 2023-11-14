@@ -43,11 +43,10 @@ func (cat *Ciweimao) ChaptersCatalogV2Api(bookId string) (gjson.Result, error) {
 }
 
 func (cat *Ciweimao) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
+	query := map[string]string{"use_daguan": "0", "module_id": "20005", "tab_type": "200", "recommend": "module_list", "carousel_position": "", "book_id": bookId}
 	if len(bookId) != 9 {
 		return gjson.Result{}, fmt.Errorf("bookId length is not 9")
-	}
-	bookInfo, err := cat.Req.PostAPI(bookInfoApiPoint, map[string]string{"book_id": bookId})
-	if err != nil {
+	} else if bookInfo, err := cat.Req.PostAPI(bookInfoApiPoint, query); err != nil {
 		return gjson.Result{}, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, err.Error())
 	} else {
 		return bookInfo.Get("data.book_info"), nil
@@ -55,21 +54,30 @@ func (cat *Ciweimao) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
 }
 
 func (cat *Ciweimao) BookInfoApiByBookURL(url string) (gjson.Result, error) {
-	bookIdMustCompile := regexp.MustCompile(`book/(\d{9})`).FindStringSubmatch(url)
-	if len(bookIdMustCompile) < 2 {
+	if bi := regexp.MustCompile(`(\d{9})`).FindStringSubmatch(url); len(bi) < 2 {
 		return gjson.Result{}, fmt.Errorf("bookId is empty")
+	} else {
+		return cat.BookInfoApiByBookId(bi[1])
 	}
-	return cat.BookInfoApiByBookId(bookIdMustCompile[1])
 }
 
-func (cat *Ciweimao) SearchByKeywordApi(keyword, page string) ([]gjson.Result, error) {
-	search, err := cat.Req.PostAPI(searchBookApiPoint, map[string]string{"count": "10", "page": page, "category_index": "0", "key": keyword})
-	if err != nil {
-		return nil, err
+func (cat *Ciweimao) ReviewListApi(bookId string, page string) (gjson.Result, error) {
+	return cat.Req.PostAPI(reviewListApiPoint, map[string]string{"book_id": bookId, "count": "10", "page": page, "type": "1"})
+}
+func (cat *Ciweimao) ReviewCommentListApi(reviewId string, page string) (gjson.Result, error) {
+	return cat.Req.PostAPI(bookReviewCommentListApiPoint, map[string]string{"review_id": reviewId, "count": "10", "page": page})
+}
+func (cat *Ciweimao) ReviewCommentReplyListApi(commentId string, page string) (gjson.Result, error) {
+	return cat.Req.PostAPI(reviewCommentReplyListApiPoint, map[string]string{"comment_id": commentId, "count": "10", "page": page})
+}
+func (cat *Ciweimao) SearchByKeywordApi(keyword, page string) (gjson.Result, error) {
+	query := map[string]string{"count": "10", "page": page, "category_index": "0", "key": keyword}
+	if search, err := cat.Req.PostAPI(searchBookApiPoint, query); err != nil {
+		return gjson.Result{}, err
 	} else if len(search.Get("data.book_list").Array()) == 0 {
-		return nil, fmt.Errorf("search book is empty")
+		return gjson.Result{}, fmt.Errorf("search book is empty")
 	} else {
-		return search.Get("data.book_list").Array(), nil
+		return search.Get("data.book_list"), nil
 	}
 }
 
@@ -120,10 +128,23 @@ func (cat *Ciweimao) AutoRegV2Api(android string) (gjson.Result, error) {
 }
 
 func (cat *Ciweimao) BookShelfIdListApi() (gjson.Result, error) {
-	return cat.Req.PostAPI(bookshelfListApiPoint, nil)
+	if bookshelf, err := cat.Req.PostAPI(bookshelfListApiPoint, nil); err != nil {
+		return gjson.Result{}, err
+	} else if len(bookshelf.Get("data.shelf_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("bookshelf is empty")
+	} else {
+		return bookshelf.Get("data.shelf_list"), nil
+	}
 }
 func (cat *Ciweimao) BookShelfListApi(shelfId string) (gjson.Result, error) {
-	return cat.Req.PostAPI(bookshelfBookListApiPoint, map[string]string{"shelf_id": shelfId, "last_mod_time": "0", "direction": "prev"})
+	query := map[string]string{"shelf_id": shelfId, "last_mod_time": "0", "direction": "prev", "order": "last_read_time", "count": "999", "page": "0"}
+	if result, err := cat.Req.PostAPI(bookshelfBookListApiPoint, query); err != nil {
+		return gjson.Result{}, err
+	} else if len(result.Get("data.book_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("bookshelf is empty")
+	} else {
+		return result.Get("data.book_list"), nil
+	}
 }
 
 func (cat *Ciweimao) UseGeetestInfoApi(loginName string) (int, error) {
