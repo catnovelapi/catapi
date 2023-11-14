@@ -130,6 +130,10 @@ func (cat *Ciweimao) ChapterCommandApi(chapterId string) (string, error) {
 	}
 }
 
+func (cat *Ciweimao) TsukkomiNumApi(chapterID string) (gjson.Result, error) {
+	return cat.Req.PostAPI(chapterTsukkomiNumApiPoint, map[string]string{"chapter_id": chapterID})
+}
+
 func (cat *Ciweimao) contentInfoApi(chapterId string) (gjson.Result, string, error) {
 	command, err := cat.ChapterCommandApi(chapterId)
 	if err != nil {
@@ -159,7 +163,12 @@ func (cat *Ciweimao) ChapterInfoApi(chapterId string) (gjson.Result, error) {
 }
 
 func (cat *Ciweimao) AutoRegV2Api(android string) (gjson.Result, error) {
-	return cat.Req.PostAPI(autoRegV2ApiPoint, map[string]string{"gender": "1", "channel": "oppo", "uuid": "android " + android})
+	query := map[string]string{"gender": "1", "channel": "oppo", "uuid": "android " + android}
+	if autoReg, err := cat.Req.PostAPI(autoRegV2ApiPoint, query); err != nil {
+		return gjson.Result{}, err
+	} else {
+		return autoReg.Get("data"), nil
+	}
 }
 
 func (cat *Ciweimao) BookShelfIdListApi() (gjson.Result, error) {
@@ -207,10 +216,6 @@ func (cat *Ciweimao) UseGeetestInfoApi(loginName string) (int, error) {
 func (cat *Ciweimao) BookmarkListApi(bookID string, page string) (gjson.Result, error) {
 	return cat.Req.PostAPI("/book/get_bookmark_list", map[string]string{"count": "10", "book_id": bookID, "page": page})
 }
-func (cat *Ciweimao) TsukkomiNumApi(chapterID string) (gjson.Result, error) {
-	return cat.Req.PostAPI("/chapter/get_tsukkomi_num", map[string]string{"chapter_id": chapterID})
-}
-
 func (cat *Ciweimao) BdaudioInfoApi(bookID string) (gjson.Result, error) {
 	return cat.Req.PostAPI("/reader/bdaudio_info", map[string]string{"book_id": bookID})
 }
