@@ -20,7 +20,7 @@ func NewCiweimaoClient() *CiweimaoClient {
 		},
 	}
 	client.SetRetryCount(7)
-	client.SetBaseURL("https://app.hbooker.com")
+	client.SetBaseURL("https://app.hbooker.com").SetUserAgent("Android")
 	var versionNumber string
 	if version, err := client.Ciweimao.GetVersionApi(); err != nil {
 		versionNumber = "2.9.290"
