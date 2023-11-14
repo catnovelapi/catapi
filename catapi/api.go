@@ -159,7 +159,12 @@ func (cat *Ciweimao) ChapterInfoApi(chapterId string) (gjson.Result, error) {
 }
 
 func (cat *Ciweimao) AutoRegV2Api(android string) (gjson.Result, error) {
-	return cat.Req.PostAPI(autoRegV2ApiPoint, map[string]string{"gender": "1", "channel": "oppo", "uuid": "android " + android})
+	query := map[string]string{"gender": "1", "channel": "oppo", "uuid": "android " + android}
+	if autoReg, err := cat.Req.PostAPI(autoRegV2ApiPoint, query); err != nil {
+		return gjson.Result{}, err
+	} else {
+		return autoReg.Get("data"), nil
+	}
 }
 
 func (cat *Ciweimao) BookShelfIdListApi() (gjson.Result, error) {
