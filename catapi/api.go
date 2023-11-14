@@ -43,11 +43,10 @@ func (cat *Ciweimao) ChaptersCatalogV2Api(bookId string) (gjson.Result, error) {
 }
 
 func (cat *Ciweimao) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
+	query := map[string]string{"use_daguan": "0", "module_id": "20005", "tab_type": "200", "recommend": "module_list", "carousel_position": "", "book_id": bookId}
 	if len(bookId) != 9 {
 		return gjson.Result{}, fmt.Errorf("bookId length is not 9")
-	}
-	bookInfo, err := cat.Req.PostAPI(bookInfoApiPoint, map[string]string{"book_id": bookId})
-	if err != nil {
+	} else if bookInfo, err := cat.Req.PostAPI(bookInfoApiPoint, query); err != nil {
 		return gjson.Result{}, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, err.Error())
 	} else {
 		return bookInfo.Get("data.book_info"), nil
@@ -55,26 +54,70 @@ func (cat *Ciweimao) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
 }
 
 func (cat *Ciweimao) BookInfoApiByBookURL(url string) (gjson.Result, error) {
-	bookIdMustCompile := regexp.MustCompile(`book/(\d{9})`).FindStringSubmatch(url)
-	if len(bookIdMustCompile) < 2 {
+	if bi := regexp.MustCompile(`(\d{9})`).FindStringSubmatch(url); len(bi) < 2 {
 		return gjson.Result{}, fmt.Errorf("bookId is empty")
-	}
-	return cat.BookInfoApiByBookId(bookIdMustCompile[1])
-}
-
-func (cat *Ciweimao) SearchByKeywordApi(keyword, page string) ([]gjson.Result, error) {
-	search, err := cat.Req.PostAPI(searchBookApiPoint, map[string]string{"count": "10", "page": page, "category_index": "0", "key": keyword})
-	if err != nil {
-		return nil, err
-	} else if len(search.Get("data.book_list").Array()) == 0 {
-		return nil, fmt.Errorf("search book is empty")
 	} else {
-		return search.Get("data.book_list").Array(), nil
+		return cat.BookInfoApiByBookId(bi[1])
 	}
 }
 
-func (cat *Ciweimao) SearchByTagApi(tagName, page string) (gjson.Result, error) {
-	return cat.Req.PostAPI(searchBookTagApiPoint, map[string]string{"count": "10", "page": page, "type": "0", "tag": tagName})
+func (cat *Ciweimao) ReviewListApi(bookId string, page string) (gjson.Result, error) {
+	if result, err := cat.Req.PostAPI(reviewListApiPoint, map[string]string{"book_id": bookId, "count": "10", "page": page, "type": "1"}); err != nil {
+		return gjson.Result{}, err
+	} else if len(result.Get("data.review_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("review list is empty")
+	} else {
+		return result.Get("data.review_list"), nil
+	}
+}
+func (cat *Ciweimao) ReviewCommentListApi(reviewId string, page string) (gjson.Result, error) {
+	if result, err := cat.Req.PostAPI(bookReviewCommentListApiPoint, map[string]string{"review_id": reviewId, "count": "10", "page": page}); err != nil {
+		return gjson.Result{}, err
+	} else {
+		return result.Get("data"), nil
+	}
+}
+func (cat *Ciweimao) ReviewCommentReplyListApi(commentId string, page string) (gjson.Result, error) {
+	if result, err := cat.Req.PostAPI(reviewCommentReplyListApiPoint, map[string]string{"comment_id": commentId, "count": "10", "page": page}); err != nil {
+		return gjson.Result{}, err
+	} else if len(result.Get("data.review_comment_reply_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("review comment reply list is empty")
+	} else {
+		return result.Get("data.review_comment_reply_list"), nil
+	}
+}
+func (cat *Ciweimao) SearchByKeywordApi(keyword, page string) (gjson.Result, error) {
+	query := map[string]string{"count": "10", "page": page, "category_index": "0", "key": keyword}
+	if search, err := cat.Req.PostAPI(searchBookApiPoint, query); err != nil {
+		return gjson.Result{}, err
+	} else if len(search.Get("data.book_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("search book is empty")
+	} else {
+		return search.Get("data.book_list"), nil
+	}
+}
+
+func (cat *Ciweimao) RedTagBookListApi(tagName, page string) (gjson.Result, error) {
+	query := map[string]string{"count": "10", "page": page, "type": "0", "tag": tagName}
+	if result, err := cat.Req.PostAPI(redTagApiPoint, query); err != nil {
+		return gjson.Result{}, err
+	} else if len(result.Get("data.book_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("search book red tag is empty")
+	} else {
+		return result.Get("data.book_list"), nil
+	}
+}
+func (cat *Ciweimao) YellowAndBlueTagBookListApi(tagName, filterWord, page string) (gjson.Result, error) {
+	query := map[string]string{"filter_word": filterWord, "count": "10", "use_daguan": "0", "page": page,
+		"is_paid": "", "category_index": "0", "key": "", "filter_uptime": "", "up_status": "", "order": ""}
+	query["tags"] = `[{"filter":"1","tag":"` + tagName + `"}]`
+	if result, err := cat.Req.PostAPI(searchBookApiPoint, query); err != nil {
+		return gjson.Result{}, err
+	} else if len(result.Get("data.book_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("search book yellow tag is empty")
+	} else {
+		return result.Get("data.book_list"), nil
+	}
 }
 func (cat *Ciweimao) SignupApi(account string, password string) (gjson.Result, error) {
 	return cat.Req.PostAPI(loginApiPoint, map[string]string{"login_name": account, "passwd": password})
@@ -87,16 +130,32 @@ func (cat *Ciweimao) ChapterCommandApi(chapterId string) (string, error) {
 	}
 }
 
-func (cat *Ciweimao) ChapterInfoApi(chapterId string) (gjson.Result, error) {
+func (cat *Ciweimao) contentInfoApi(chapterId string) (gjson.Result, string, error) {
 	command, err := cat.ChapterCommandApi(chapterId)
 	if err != nil {
-		return gjson.Result{}, fmt.Errorf("ChapterTitle:%s,获取章节command失败,tips:%s", chapterId, err.Error())
+		return gjson.Result{}, "", fmt.Errorf("ChapterTitle:%s,获取章节command失败,tips:%s", chapterId, err.Error())
 	}
 	chapterInfo, err := cat.Req.PostAPI(chapterInfoApiPoint, map[string]string{"chapter_id": chapterId, "chapter_command": command})
 	if err != nil {
-		return gjson.Result{}, err
+		return gjson.Result{}, "", err
 	}
-	return chapterInfo.Get("data.chapter_info"), nil
+	return chapterInfo.Get("data.chapter_info"), command, nil
+}
+
+func (cat *Ciweimao) ChapterContentApi(chapterId string) (string, error) {
+	chapterInfo, command, err := cat.contentInfoApi(chapterId)
+	if err != nil {
+		return "", err
+	}
+	chapterInfoText, err := cat.Req.DecodeEncryptText(chapterInfo.Get("txt_content").String(), command)
+	if err != nil {
+		return "", err
+	}
+	return chapterInfoText, nil
+}
+func (cat *Ciweimao) ChapterInfoApi(chapterId string) (gjson.Result, error) {
+	chapterInfo, _, err := cat.contentInfoApi(chapterId)
+	return chapterInfo, err
 }
 
 func (cat *Ciweimao) AutoRegV2Api(android string) (gjson.Result, error) {
@@ -104,10 +163,38 @@ func (cat *Ciweimao) AutoRegV2Api(android string) (gjson.Result, error) {
 }
 
 func (cat *Ciweimao) BookShelfIdListApi() (gjson.Result, error) {
-	return cat.Req.PostAPI(bookshelfListApiPoint, nil)
+	if bookshelf, err := cat.Req.PostAPI(bookshelfListApiPoint, nil); err != nil {
+		return gjson.Result{}, err
+	} else if len(bookshelf.Get("data.shelf_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("bookshelf is empty")
+	} else {
+		return bookshelf.Get("data.shelf_list"), nil
+	}
 }
 func (cat *Ciweimao) BookShelfListApi(shelfId string) (gjson.Result, error) {
-	return cat.Req.PostAPI(bookshelfBookListApiPoint, map[string]string{"shelf_id": shelfId, "last_mod_time": "0", "direction": "prev"})
+	query := map[string]string{"shelf_id": shelfId, "last_mod_time": "0", "direction": "prev", "order": "last_read_time", "count": "999", "page": "0"}
+	if result, err := cat.Req.PostAPI(bookshelfBookListApiPoint, query); err != nil {
+		return gjson.Result{}, err
+	} else if len(result.Get("data.book_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("bookshelf is empty")
+	} else {
+		return result.Get("data.book_list"), nil
+	}
+}
+
+func (cat *Ciweimao) GetVersionApi() (string, error) {
+	if result, err := cat.Req.PostAPI(getVersionApiPoint, nil); err != nil {
+		return "", err
+	} else {
+		return result.Get("data.android_version").String(), nil
+	}
+}
+func (cat *Ciweimao) CheckVersionApi() (gjson.Result, error) {
+	if result, err := cat.Req.PostAPI(checkVersionApiPoint, nil); err != nil {
+		return gjson.Result{}, err
+	} else {
+		return result.Get("data"), nil
+	}
 }
 
 func (cat *Ciweimao) UseGeetestInfoApi(loginName string) (int, error) {
@@ -146,11 +233,6 @@ func (cat *Ciweimao) PostPropInfoApi() (gjson.Result, error) {
 func (cat *Ciweimao) MetaDataApi() (gjson.Result, error) {
 	return cat.Req.PostAPI("/meta/get_meta_data", nil)
 }
-
-func (cat *Ciweimao) VersionApi() (gjson.Result, error) {
-	return cat.Req.PostAPI("/setting/get_version", nil)
-}
-
 func (cat *Ciweimao) StartpageUrlListApi() (gjson.Result, error) {
 	return cat.Req.PostAPI("/setting/get_startpage_url_list", nil)
 }
