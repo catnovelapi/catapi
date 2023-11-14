@@ -97,8 +97,27 @@ func (cat *Ciweimao) SearchByKeywordApi(keyword, page string) (gjson.Result, err
 	}
 }
 
-func (cat *Ciweimao) SearchByTagApi(tagName, page string) (gjson.Result, error) {
-	return cat.Req.PostAPI(searchBookTagApiPoint, map[string]string{"count": "10", "page": page, "type": "0", "tag": tagName})
+func (cat *Ciweimao) RedTagBookListApi(tagName, page string) (gjson.Result, error) {
+	query := map[string]string{"count": "10", "page": page, "type": "0", "tag": tagName}
+	if result, err := cat.Req.PostAPI(redTagApiPoint, query); err != nil {
+		return gjson.Result{}, err
+	} else if len(result.Get("data.book_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("search book red tag is empty")
+	} else {
+		return result.Get("data.book_list"), nil
+	}
+}
+func (cat *Ciweimao) YellowAndBlueTagBookListApi(tagName, filterWord, page string) (gjson.Result, error) {
+	query := map[string]string{"filter_word": filterWord, "count": "10", "use_daguan": "0", "page": page,
+		"is_paid": "", "category_index": "0", "key": "", "filter_uptime": "", "up_status": "", "order": ""}
+	query["tags"] = `[{"filter":"1","tag":"` + tagName + `"}]`
+	if result, err := cat.Req.PostAPI(searchBookApiPoint, query); err != nil {
+		return gjson.Result{}, err
+	} else if len(result.Get("data.book_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("search book yellow tag is empty")
+	} else {
+		return result.Get("data.book_list"), nil
+	}
 }
 func (cat *Ciweimao) SignupApi(account string, password string) (gjson.Result, error) {
 	return cat.Req.PostAPI(loginApiPoint, map[string]string{"login_name": account, "passwd": password})
