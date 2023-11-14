@@ -14,11 +14,21 @@ type CiweimaoClient struct {
 }
 
 func NewCiweimaoClient() *CiweimaoClient {
-	client := &CiweimaoClient{&catapi.Ciweimao{Req: &catapi.CiweimaoRequest{Debug: false, Version: "2.9.290"}}}
-	newResty := resty.New().SetRetryCount(7).
-		SetBaseURL("https://app.hbooker.com").
-		SetHeader("User-Agent", "Android com.kuangxiangciweimao.novel "+client.Ciweimao.Req.Version)
-	client.Ciweimao.Req.BuilderClient = newResty
+	client := &CiweimaoClient{
+		Ciweimao: &catapi.Ciweimao{
+			Req: &catapi.CiweimaoRequest{Debug: false, BuilderClient: resty.New()},
+		},
+	}
+	client.SetRetryCount(7)
+	client.SetBaseURL("https://app.hbooker.com")
+	var versionNumber string
+	if version, err := client.Ciweimao.GetVersionApi(); err != nil {
+		versionNumber = "2.9.290"
+	} else {
+		versionNumber = version
+	}
+	client.SetVersion(versionNumber)
+	client.SetUserAgent("Android com.kuangxiangciweimao.novel")
 	return client
 }
 
@@ -48,7 +58,18 @@ func (ciweimaoClient *CiweimaoClient) SetLoginToken(loginToken string) *Ciweimao
 		ciweimaoClient.Ciweimao.Req.LoginToken = loginToken
 	}
 	return ciweimaoClient
-
+}
+func (ciweimaoClient *CiweimaoClient) SetUserAgent(value string) *CiweimaoClient {
+	ciweimaoClient.Ciweimao.Req.BuilderClient.SetHeader("User-Agent", value+" "+ciweimaoClient.Ciweimao.Req.Version)
+	return ciweimaoClient
+}
+func (ciweimaoClient *CiweimaoClient) SetRetryCount(retryCount int) *CiweimaoClient {
+	ciweimaoClient.Ciweimao.Req.BuilderClient.SetRetryCount(retryCount)
+	return ciweimaoClient
+}
+func (ciweimaoClient *CiweimaoClient) SetBaseURL(baseURL string) *CiweimaoClient {
+	ciweimaoClient.Ciweimao.Req.BuilderClient.SetBaseURL(baseURL)
+	return ciweimaoClient
 }
 func UnescapeUnicode(raw string) (string, error) {
 	str, err := strconv.Unquote(strings.Replace(strconv.Quote(raw), `\\u`, `\u`, -1))

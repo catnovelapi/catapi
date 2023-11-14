@@ -182,6 +182,21 @@ func (cat *Ciweimao) BookShelfListApi(shelfId string) (gjson.Result, error) {
 	}
 }
 
+func (cat *Ciweimao) GetVersionApi() (string, error) {
+	if result, err := cat.Req.PostAPI(getVersionApiPoint, nil); err != nil {
+		return "", err
+	} else {
+		return result.Get("data.android_version").String(), nil
+	}
+}
+func (cat *Ciweimao) CheckVersionApi() (gjson.Result, error) {
+	if result, err := cat.Req.PostAPI(checkVersionApiPoint, nil); err != nil {
+		return gjson.Result{}, err
+	} else {
+		return result.Get("data"), nil
+	}
+}
+
 func (cat *Ciweimao) UseGeetestInfoApi(loginName string) (int, error) {
 	useGeetest, err := cat.Req.PostAPI(useGeetestApiPoint, map[string]string{"login_name": loginName})
 	if err != nil {
@@ -218,11 +233,6 @@ func (cat *Ciweimao) PostPropInfoApi() (gjson.Result, error) {
 func (cat *Ciweimao) MetaDataApi() (gjson.Result, error) {
 	return cat.Req.PostAPI("/meta/get_meta_data", nil)
 }
-
-func (cat *Ciweimao) VersionApi() (gjson.Result, error) {
-	return cat.Req.PostAPI("/setting/get_version", nil)
-}
-
 func (cat *Ciweimao) StartpageUrlListApi() (gjson.Result, error) {
 	return cat.Req.PostAPI("/setting/get_startpage_url_list", nil)
 }

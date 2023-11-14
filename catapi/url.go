@@ -17,3 +17,6 @@ const useGeetestApiPoint = "/signup/use_geetest"
 const reviewListApiPoint = "/book/get_review_list"
 const bookReviewCommentListApiPoint = "/book/get_review_comment_list"
 const reviewCommentReplyListApiPoint = "/book/get_review_comment_reply_list"
+
+const checkVersionApiPoint = "/setting/check_version"
+const getVersionApiPoint = "/setting/get_version"

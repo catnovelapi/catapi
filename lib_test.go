@@ -111,3 +111,19 @@ func TestCiweimaoYellowTagBookListApi(t *testing.T) {
 	}
 	fmt.Println(api.String())
 }
+
+func TestCiweimaoVersionApi(t *testing.T) {
+	api, err := client.Ciweimao.GetVersionApi()
+	if err != nil {
+		t.Fatalf("Error in VersionApi: %v", err)
+	}
+	fmt.Println(api)
+}
+
+func TestCiweimaoCheckVersionApi(t *testing.T) {
+	api, err := client.Ciweimao.CheckVersionApi()
+	if err != nil {
+		t.Fatalf("Error in CheckVersionApi: %v", err)
+	}
+	fmt.Println(api.String())
+}
