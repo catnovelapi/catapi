@@ -67,8 +67,39 @@ func TestCiweimaoChapterInfo(t *testing.T) {
 }
 
 func TestCiweimaoBookShelfIdList(t *testing.T) {
-	client.Ciweimao.BookShelfIdListApi()
+	api, err := client.Ciweimao.BookShelfIdListApi()
+	if err != nil {
+		return
+	}
+	fmt.Println(api.String())
 }
 func TestCiweimaoBookShelfList(t *testing.T) {
-	client.Ciweimao.BookShelfListApi(os.Getenv("SHELF_ID"))
+	api, err := client.Ciweimao.BookShelfListApi(os.Getenv("SHELF_ID"))
+	if err != nil {
+		return
+	}
+	fmt.Println(api.String())
+}
+func TestCiweimaoReviewList(t *testing.T) {
+	api, err := client.Ciweimao.ReviewListApi(os.Getenv("BOOK_ID"), "0")
+	if err != nil {
+		return
+	}
+	fmt.Println(api.String())
+}
+
+func TestCiweimaoReviewCommentListApi(t *testing.T) {
+	api, err := client.Ciweimao.ReviewCommentListApi(os.Getenv("REVIEW_ID"), "0")
+	if err != nil {
+		return
+	}
+	fmt.Println(api.String())
+}
+
+func TestCiweimaoReviewCommentReplyListApi(t *testing.T) {
+	api, err := client.Ciweimao.ReviewCommentReplyListApi(os.Getenv("COMMENT_ID"), "0")
+	if err != nil {
+		return
+	}
+	fmt.Println(api.String())
 }

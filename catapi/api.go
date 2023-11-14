@@ -62,13 +62,29 @@ func (cat *Ciweimao) BookInfoApiByBookURL(url string) (gjson.Result, error) {
 }
 
 func (cat *Ciweimao) ReviewListApi(bookId string, page string) (gjson.Result, error) {
-	return cat.Req.PostAPI(reviewListApiPoint, map[string]string{"book_id": bookId, "count": "10", "page": page, "type": "1"})
+	if result, err := cat.Req.PostAPI(reviewListApiPoint, map[string]string{"book_id": bookId, "count": "10", "page": page, "type": "1"}); err != nil {
+		return gjson.Result{}, err
+	} else if len(result.Get("data.review_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("review list is empty")
+	} else {
+		return result.Get("data.review_list"), nil
+	}
 }
 func (cat *Ciweimao) ReviewCommentListApi(reviewId string, page string) (gjson.Result, error) {
-	return cat.Req.PostAPI(bookReviewCommentListApiPoint, map[string]string{"review_id": reviewId, "count": "10", "page": page})
+	if result, err := cat.Req.PostAPI(bookReviewCommentListApiPoint, map[string]string{"review_id": reviewId, "count": "10", "page": page}); err != nil {
+		return gjson.Result{}, err
+	} else {
+		return result.Get("data"), nil
+	}
 }
 func (cat *Ciweimao) ReviewCommentReplyListApi(commentId string, page string) (gjson.Result, error) {
-	return cat.Req.PostAPI(reviewCommentReplyListApiPoint, map[string]string{"comment_id": commentId, "count": "10", "page": page})
+	if result, err := cat.Req.PostAPI(reviewCommentReplyListApiPoint, map[string]string{"comment_id": commentId, "count": "10", "page": page}); err != nil {
+		return gjson.Result{}, err
+	} else if len(result.Get("data.review_comment_reply_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("review comment reply list is empty")
+	} else {
+		return result.Get("data.review_comment_reply_list"), nil
+	}
 }
 func (cat *Ciweimao) SearchByKeywordApi(keyword, page string) (gjson.Result, error) {
 	query := map[string]string{"count": "10", "page": page, "category_index": "0", "key": keyword}
