@@ -87,16 +87,32 @@ func (cat *Ciweimao) ChapterCommandApi(chapterId string) (string, error) {
 	}
 }
 
-func (cat *Ciweimao) ChapterInfoApi(chapterId string) (gjson.Result, error) {
+func (cat *Ciweimao) contentInfoApi(chapterId string) (gjson.Result, string, error) {
 	command, err := cat.ChapterCommandApi(chapterId)
 	if err != nil {
-		return gjson.Result{}, fmt.Errorf("ChapterTitle:%s,获取章节command失败,tips:%s", chapterId, err.Error())
+		return gjson.Result{}, "", fmt.Errorf("ChapterTitle:%s,获取章节command失败,tips:%s", chapterId, err.Error())
 	}
 	chapterInfo, err := cat.Req.PostAPI(chapterInfoApiPoint, map[string]string{"chapter_id": chapterId, "chapter_command": command})
 	if err != nil {
-		return gjson.Result{}, err
+		return gjson.Result{}, "", err
 	}
-	return chapterInfo.Get("data.chapter_info"), nil
+	return chapterInfo.Get("data.chapter_info"), command, nil
+}
+
+func (cat *Ciweimao) ChapterContentApi(chapterId string) (string, error) {
+	chapterInfo, command, err := cat.contentInfoApi(chapterId)
+	if err != nil {
+		return "", err
+	}
+	chapterInfoText, err := cat.Req.DecodeEncryptText(chapterInfo.Get("txt_content").String(), command)
+	if err != nil {
+		return "", err
+	}
+	return chapterInfoText, nil
+}
+func (cat *Ciweimao) ChapterInfoApi(chapterId string) (gjson.Result, error) {
+	chapterInfo, _, err := cat.contentInfoApi(chapterId)
+	return chapterInfo, err
 }
 
 func (cat *Ciweimao) AutoRegV2Api(android string) (gjson.Result, error) {

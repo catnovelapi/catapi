@@ -9,20 +9,16 @@ import (
 	"strings"
 )
 
-const useragent = "Android com.kuangxiangciweimao.novel "
-
 type CiweimaoClient struct {
 	Ciweimao *catapi.Ciweimao
 }
 
 func NewCiweimaoClient() *CiweimaoClient {
-	client := &CiweimaoClient{&catapi.Ciweimao{}}
-	client.Ciweimao.Req = &catapi.CiweimaoRequest{
-		Debug:         false,
-		Version:       "2.9.290",
-		BuilderClient: resty.New().SetRetryCount(7).SetBaseURL("https://app.hbooker.com"),
-	}
-	client.Ciweimao.Req.BuilderClient.SetHeaders(map[string]string{"User-Agent": useragent + client.Ciweimao.Req.Version})
+	client := &CiweimaoClient{&catapi.Ciweimao{Req: &catapi.CiweimaoRequest{Debug: false, Version: "2.9.290"}}}
+	newResty := resty.New().SetRetryCount(7).
+		SetBaseURL("https://app.hbooker.com").
+		SetHeader("User-Agent", "Android com.kuangxiangciweimao.novel "+client.Ciweimao.Req.Version)
+	client.Ciweimao.Req.BuilderClient = newResty
 	return client
 }
 
