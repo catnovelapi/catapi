@@ -8,70 +8,70 @@ import (
 	"strings"
 )
 
-type CiweimaoClient struct {
+type Client struct {
 	Ciweimao *catapi.Ciweimao
 }
 
-func NewCiweimaoClient() *CiweimaoClient {
-	client := &CiweimaoClient{
-		Ciweimao: &catapi.Ciweimao{Req: &catapi.CiweimaoRequest{BuilderClient: builder.NewClient()}},
-	}
-
+func NewCiweimaoClient() *Client {
+	builderClient := builder.NewClient()
+	client := &Client{Ciweimao: &catapi.Ciweimao{
+		Req: &catapi.CiweimaoRequest{BuilderClient: builderClient},
+	}}
 	return client
 }
-func (ciweimaoClient *CiweimaoClient) R() *CiweimaoClient {
-	return ciweimaoClient.
+func (client *Client) R() *Client {
+	return client.
 		SetRetryCount(7).
 		SetVersion("2.9.290").
 		SetDeviceToken("ciweimao_").
 		SetBaseURL("https://app.hbooker.com").
 		SetUserAgent("Android com.kuangxiangciweimao.novel")
 }
-func (ciweimaoClient *CiweimaoClient) UpdateVersion() *CiweimaoClient {
-	if version, err := ciweimaoClient.Ciweimao.GetVersionApi(); err == nil {
-		ciweimaoClient.SetVersion(version)
+func (client *Client) UpdateVersion() *Client {
+	if version, err := client.Ciweimao.GetVersionApi(); err == nil {
+		client.SetVersion(version)
 	}
 	// refresh user agent
-	ciweimaoClient.SetUserAgent("Android com.kuangxiangciweimao.novel")
-	return ciweimaoClient
+	client.SetUserAgent("Android com.kuangxiangciweimao.novel")
+	return client
 }
-func (ciweimaoClient *CiweimaoClient) SetDeviceToken(deviceToken string) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.BuilderClient.SetHeader("device_token", deviceToken)
-	return ciweimaoClient
+func (client *Client) SetDeviceToken(deviceToken string) *Client {
+	client.Ciweimao.Req.BuilderClient.SetHeader("device_token", deviceToken)
+	return client
 }
-func (ciweimaoClient *CiweimaoClient) SetVersion(version string) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.BuilderClient.SetHeader("app_version", version)
-	return ciweimaoClient
+func (client *Client) SetVersion(version string) *Client {
+	client.Ciweimao.Req.BuilderClient.SetHeader("app_version", version)
+	return client
 }
 
-func (ciweimaoClient *CiweimaoClient) SetDebug() *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.BuilderClient.SetDebug()
-	ciweimaoClient.Ciweimao.Req.BuilderClient.SetDebugFile("catapi.txt")
-	return ciweimaoClient
+func (client *Client) SetDebug() *Client {
+	client.Ciweimao.Req.BuilderClient.SetDebug()
+	client.Ciweimao.Req.BuilderClient.SetDebugFile("catapi.txt")
+	return client
 }
-func (ciweimaoClient *CiweimaoClient) SetProxy(proxy string) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.BuilderClient.SetProxy(proxy)
-	return ciweimaoClient
+func (client *Client) SetProxy(proxy string) *Client {
+	client.Ciweimao.Req.BuilderClient.SetProxy(proxy)
+	return client
 }
-func (ciweimaoClient *CiweimaoClient) SetLoginToken(loginToken string) *CiweimaoClient {
+func (client *Client) SetLoginToken(loginToken string) *Client {
 	if len(loginToken) != 32 {
 		log.Println("loginToken length is not 32")
 	} else {
-		ciweimaoClient.Ciweimao.Req.BuilderClient.SetHeader("login_token", loginToken)
+		client.Ciweimao.Req.BuilderClient.SetHeader("login_token", loginToken)
 	}
-	return ciweimaoClient
+	return client
 }
-func (ciweimaoClient *CiweimaoClient) SetUserAgent(value string) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.BuilderClient.SetUserAgent(value + " " + ciweimaoClient.Ciweimao.Req.Version)
-	return ciweimaoClient
+func (client *Client) SetUserAgent(value string) *Client {
+	client.Ciweimao.Req.BuilderClient.SetUserAgent(value + " " + client.Ciweimao.Req.Version)
+	return client
 }
-func (ciweimaoClient *CiweimaoClient) SetRetryCount(retryCount int) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.BuilderClient.SetRetryNumber(retryCount)
-	return ciweimaoClient
+func (client *Client) SetRetryCount(retryCount int) *Client {
+	client.Ciweimao.Req.BuilderClient.SetRetryNumber(retryCount)
+	return client
 }
-func (ciweimaoClient *CiweimaoClient) SetBaseURL(baseURL string) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.BuilderClient.SetBaseURL(baseURL)
-	return ciweimaoClient
+func (client *Client) SetBaseURL(baseURL string) *Client {
+	client.Ciweimao.Req.BuilderClient.SetBaseURL(baseURL)
+	return client
 }
 func UnescapeUnicode(raw string) (string, error) {
 	str, err := strconv.Unquote(strings.Replace(strconv.Quote(raw), `\\u`, `\u`, -1))
@@ -81,16 +81,16 @@ func UnescapeUnicode(raw string) (string, error) {
 	return str, nil
 }
 
-func (ciweimaoClient *CiweimaoClient) SetAccount(account string) *CiweimaoClient {
+func (client *Client) SetAccount(account string) *Client {
 	if unescapeUnicode, err := UnescapeUnicode(account); err != nil {
 		log.Println("set account error", err)
 	} else if !strings.Contains(unescapeUnicode, "书客") {
 		log.Println("set account error:", "account is not contains 书客")
 	} else {
-		ciweimaoClient.Ciweimao.Req.BuilderClient.SetHeader("account", unescapeUnicode)
+		client.Ciweimao.Req.BuilderClient.SetHeader("account", unescapeUnicode)
 	}
-	return ciweimaoClient
+	return client
 }
-func (ciweimaoClient *CiweimaoClient) SetAuthentication(account, loginToken string) *CiweimaoClient {
-	return ciweimaoClient.SetAccount(account).SetLoginToken(loginToken)
+func (client *Client) SetAuthentication(account, loginToken string) *Client {
+	return client.SetAccount(account).SetLoginToken(loginToken)
 }

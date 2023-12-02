@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-var client *CiweimaoClient
+var client *Client
 
 func init() {
 	err := godotenv.Load()
@@ -18,7 +18,7 @@ func init() {
 	client = NewCiweimaoClient().
 		SetDebug().
 		SetProxy(os.Getenv("PROXY")).
-		SetAuth(os.Getenv("CAT_ACCOUNT"), os.Getenv("CAT_LOGIN_TOKEN"))
+		SetAuthentication(os.Getenv("CAT_ACCOUNT"), os.Getenv("CAT_LOGIN_TOKEN"))
 }
 
 func TestNewCiweimaoSearchBooks(t *testing.T) {
