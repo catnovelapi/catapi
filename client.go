@@ -62,7 +62,9 @@ func (client *Client) SetLoginToken(loginToken string) *Client {
 	return client
 }
 func (client *Client) SetUserAgent(value string) *Client {
-	client.Ciweimao.Req.BuilderClient.SetUserAgent(value + " " + client.Ciweimao.Req.Version)
+	client.Ciweimao.Req.BuilderClient.SetUserAgent(value + " " +
+		client.Ciweimao.Req.BuilderClient.GetClientHeaders().Get("app_version"),
+	)
 	return client
 }
 func (client *Client) SetRetryCount(retryCount int) *Client {
