@@ -2,6 +2,7 @@ package catapi
 
 import (
 	"fmt"
+	"github.com/catnovelapi/catapi/catapi/decrypt"
 	"github.com/tidwall/gjson"
 	"regexp"
 )
@@ -151,7 +152,7 @@ func (cat *Ciweimao) ChapterContentApi(chapterId string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	chapterInfoText, err := cat.Req.DecodeEncryptText(chapterInfo.Get("txt_content").String(), command)
+	chapterInfoText, err := decrypt.DecodeEncryptText(chapterInfo.Get("txt_content").String(), command)
 	if err != nil {
 		return "", err
 	}
