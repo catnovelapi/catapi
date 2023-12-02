@@ -44,13 +44,13 @@ func (client *Client) UpdateVersion() *Client {
 
 // SetDeviceToken 方法用于设置 HTTP 请求的设备号。它接收一个 string 类型的参数，该参数表示设备号的值。
 func (client *Client) SetDeviceToken(deviceToken string) *Client {
-	client.Ciweimao.Req.BuilderClient.SetHeader("device_token", deviceToken)
+	client.Ciweimao.Req.BuilderClient.SetQueryParam("device_token", deviceToken)
 	return client
 }
 
 // SetVersion 方法用于设置 HTTP 请求的版本号。它接收一个 string 类型的参数，该参数表示版本号的值。
 func (client *Client) SetVersion(version string) *Client {
-	client.Ciweimao.Req.BuilderClient.SetHeader("app_version", version)
+	client.Ciweimao.Req.BuilderClient.SetQueryParam("app_version", version)
 	return client
 }
 
@@ -72,7 +72,7 @@ func (client *Client) SetLoginToken(loginToken string) *Client {
 	if len(loginToken) != 32 {
 		log.Println("loginToken length is not 32")
 	} else {
-		client.Ciweimao.Req.BuilderClient.SetHeader("login_token", loginToken)
+		client.Ciweimao.Req.BuilderClient.SetQueryParam("login_token", loginToken)
 	}
 	return client
 }
@@ -114,7 +114,7 @@ func (client *Client) SetAccount(account string) *Client {
 	} else if !strings.Contains(unescapeUnicode, "书客") {
 		log.Println("set account error:", "account is not contains 书客")
 	} else {
-		client.Ciweimao.Req.BuilderClient.SetHeader("account", unescapeUnicode)
+		client.Ciweimao.Req.BuilderClient.SetQueryParam("account", unescapeUnicode)
 	}
 	return client
 }
