@@ -1,7 +1,6 @@
 package catapi
 
 import (
-	"errors"
 	"fmt"
 	"github.com/catnovelapi/builder"
 	"github.com/catnovelapi/catapi/catapi/decrypt"
@@ -21,12 +20,9 @@ func (request *CiweimaoRequest) Post(url string, data map[string]any) (gjson.Res
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("request error: %s", err.Error())
 	}
-	responseText := response.String()
-	if responseText == "" {
-		return gjson.Result{}, errors.New("responseText is empty, please check your network")
-	}
+	var responseText = response.String()
 	if !gjson.Valid(responseText) {
-		responseText, err = decrypt.DecodeEncryptText(response.String(), "")
+		responseText, err = decrypt.DecodeEncryptText(responseText, "")
 		if err != nil {
 			return gjson.Result{}, fmt.Errorf("decode error: %s", err.Error())
 		}
