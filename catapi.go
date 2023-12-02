@@ -9,33 +9,31 @@ import (
 )
 
 type CiweimaoClient struct {
-	defBaseURL       string
-	defaultUserAgent string
-	defaultVersion   string
-	Ciweimao         *catapi.Ciweimao
+	Ciweimao *catapi.Ciweimao
 }
 
 func NewCiweimaoClient() *CiweimaoClient {
 	client := &CiweimaoClient{
-		defaultVersion:   "2.9.290",
-		defBaseURL:       "https://app.hbooker.com",
-		defaultUserAgent: "Android com.kuangxiangciweimao.novel",
-		Ciweimao: &catapi.Ciweimao{
-			Req: &catapi.CiweimaoRequest{BuilderClient: builder.NewClient()},
-		},
+		Ciweimao: &catapi.Ciweimao{Req: &catapi.CiweimaoRequest{BuilderClient: builder.NewClient()}},
 	}
-	client.SetRetryCount(7).
-		SetBaseURL(client.defBaseURL).
-		SetVersion(client.defaultVersion).
-		SetUserAgent(client.defaultUserAgent).
-		SetDeviceToken("ciweimao_")
 
-	if version, err := client.Ciweimao.GetVersionApi(); err == nil {
-		client.SetVersion(version)
+	return client
+}
+func (ciweimaoClient *CiweimaoClient) R() *CiweimaoClient {
+	return ciweimaoClient.
+		SetRetryCount(7).
+		SetVersion("2.9.290").
+		SetDeviceToken("ciweimao_").
+		SetBaseURL("https://app.hbooker.com").
+		SetUserAgent("Android com.kuangxiangciweimao.novel")
+}
+func (ciweimaoClient *CiweimaoClient) UpdateVersion() *CiweimaoClient {
+	if version, err := ciweimaoClient.Ciweimao.GetVersionApi(); err == nil {
+		ciweimaoClient.SetVersion(version)
 	}
 	// refresh user agent
-	client.SetUserAgent(client.defaultUserAgent)
-	return client
+	ciweimaoClient.SetUserAgent("Android com.kuangxiangciweimao.novel")
+	return ciweimaoClient
 }
 func (ciweimaoClient *CiweimaoClient) SetDeviceToken(deviceToken string) *CiweimaoClient {
 	ciweimaoClient.Ciweimao.Req.BuilderClient.SetHeader("device_token", deviceToken)
@@ -93,6 +91,6 @@ func (ciweimaoClient *CiweimaoClient) SetAccount(account string) *CiweimaoClient
 	}
 	return ciweimaoClient
 }
-func (ciweimaoClient *CiweimaoClient) SetAuth(account, loginToken string) *CiweimaoClient {
+func (ciweimaoClient *CiweimaoClient) SetAuthentication(account, loginToken string) *CiweimaoClient {
 	return ciweimaoClient.SetAccount(account).SetLoginToken(loginToken)
 }

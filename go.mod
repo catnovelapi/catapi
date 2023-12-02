@@ -4,7 +4,6 @@ go 1.19
 
 require (
 	github.com/catnovelapi/builder v0.0.8
-	github.com/go-resty/resty/v2 v2.10.0
 	github.com/joho/godotenv v1.5.1
 	github.com/tidwall/gjson v1.17.0
 )
