@@ -1,10 +1,9 @@
 package catapi
 
 import (
+	"github.com/catnovelapi/builder"
 	"github.com/catnovelapi/catapi/catapi"
-	"github.com/go-resty/resty/v2"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -22,13 +21,14 @@ func NewCiweimaoClient() *CiweimaoClient {
 		defBaseURL:       "https://app.hbooker.com",
 		defaultUserAgent: "Android com.kuangxiangciweimao.novel",
 		Ciweimao: &catapi.Ciweimao{
-			Req: &catapi.CiweimaoRequest{Debug: false, BuilderClient: resty.New()},
+			Req: &catapi.CiweimaoRequest{BuilderClient: builder.NewClient()},
 		},
 	}
 	client.SetRetryCount(7).
 		SetBaseURL(client.defBaseURL).
 		SetVersion(client.defaultVersion).
-		SetUserAgent(client.defaultUserAgent)
+		SetUserAgent(client.defaultUserAgent).
+		SetDeviceToken("ciweimao_")
 
 	if version, err := client.Ciweimao.GetVersionApi(); err == nil {
 		client.SetVersion(version)
@@ -37,20 +37,18 @@ func NewCiweimaoClient() *CiweimaoClient {
 	client.SetUserAgent(client.defaultUserAgent)
 	return client
 }
-
+func (ciweimaoClient *CiweimaoClient) SetDeviceToken(deviceToken string) *CiweimaoClient {
+	ciweimaoClient.Ciweimao.Req.BuilderClient.SetHeader("device_token", deviceToken)
+	return ciweimaoClient
+}
 func (ciweimaoClient *CiweimaoClient) SetVersion(version string) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.Version = version
+	ciweimaoClient.Ciweimao.Req.BuilderClient.SetHeader("app_version", version)
 	return ciweimaoClient
 }
 
 func (ciweimaoClient *CiweimaoClient) SetDebug() *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.Debug = true
-	ciweimaoClient.Ciweimao.Req.BuilderClient.SetDebug(true)
-	file, err := os.OpenFile("catapi.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalln("open file error !")
-	}
-	ciweimaoClient.Ciweimao.Req.FileLog = file
+	ciweimaoClient.Ciweimao.Req.BuilderClient.SetDebug()
+	ciweimaoClient.Ciweimao.Req.BuilderClient.SetDebugFile("catapi.txt")
 	return ciweimaoClient
 }
 func (ciweimaoClient *CiweimaoClient) SetProxy(proxy string) *CiweimaoClient {
@@ -61,16 +59,16 @@ func (ciweimaoClient *CiweimaoClient) SetLoginToken(loginToken string) *Ciweimao
 	if len(loginToken) != 32 {
 		log.Println("loginToken length is not 32")
 	} else {
-		ciweimaoClient.Ciweimao.Req.LoginToken = loginToken
+		ciweimaoClient.Ciweimao.Req.BuilderClient.SetHeader("login_token", loginToken)
 	}
 	return ciweimaoClient
 }
 func (ciweimaoClient *CiweimaoClient) SetUserAgent(value string) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.BuilderClient.SetHeader("User-Agent", value+" "+ciweimaoClient.Ciweimao.Req.Version)
+	ciweimaoClient.Ciweimao.Req.BuilderClient.SetUserAgent(value + " " + ciweimaoClient.Ciweimao.Req.Version)
 	return ciweimaoClient
 }
 func (ciweimaoClient *CiweimaoClient) SetRetryCount(retryCount int) *CiweimaoClient {
-	ciweimaoClient.Ciweimao.Req.BuilderClient.SetRetryCount(retryCount)
+	ciweimaoClient.Ciweimao.Req.BuilderClient.SetRetryNumber(retryCount)
 	return ciweimaoClient
 }
 func (ciweimaoClient *CiweimaoClient) SetBaseURL(baseURL string) *CiweimaoClient {
@@ -91,7 +89,7 @@ func (ciweimaoClient *CiweimaoClient) SetAccount(account string) *CiweimaoClient
 	} else if !strings.Contains(unescapeUnicode, "书客") {
 		log.Println("set account error:", "account is not contains 书客")
 	} else {
-		ciweimaoClient.Ciweimao.Req.Account = unescapeUnicode
+		ciweimaoClient.Ciweimao.Req.BuilderClient.SetHeader("account", unescapeUnicode)
 	}
 	return ciweimaoClient
 }

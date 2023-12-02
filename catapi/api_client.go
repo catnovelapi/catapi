@@ -7,37 +7,22 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/go-resty/resty/v2"
+	"github.com/catnovelapi/builder"
 	"github.com/tidwall/gjson"
-	"os"
 )
 
 type CiweimaoRequest struct {
-	Debug         bool
-	FileLog       *os.File
 	Version       string
-	LoginToken    string
 	Account       string
-	BuilderClient *resty.Client
+	BuilderClient *builder.Client
 }
 
-func (request *CiweimaoRequest) getDefaultAuthenticationFormData() map[string]string {
-	return map[string]string{
-		"device_token": "ciweimao_",
-		"app_version":  request.Version,
-		"login_token":  request.LoginToken,
-		"account":      request.Account,
-	}
-}
-func (request *CiweimaoRequest) PostAPI(url string, data map[string]string) (gjson.Result, error) {
-	formData := request.getDefaultAuthenticationFormData()
+func (request *CiweimaoRequest) Post(url string, data map[string]any) (gjson.Result, error) {
+	req := request.BuilderClient.R()
 	if data != nil {
-		for k, v := range data {
-			formData[k] = v
-		}
+		req.SetQueryParams(data)
 	}
-	response, err := request.BuilderClient.R().SetFormData(formData).Post(url)
-	defer NewApiLogger(response, request).addLogger(err)
+	response, err := req.Post(url)
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("request error: %s", err.Error())
 	}
