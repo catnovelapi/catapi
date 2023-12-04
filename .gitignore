@@ -6,7 +6,7 @@
 *.iml
 out
 gen
-.env
+main/.env
 main/main.go
 catapi.log
 ### Go template
