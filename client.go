@@ -3,6 +3,7 @@ package catapi
 import (
 	"github.com/catnovelapi/builder"
 	"github.com/catnovelapi/catapi/catapi"
+	"github.com/catnovelapi/catapi/catapi/decrypt"
 	"log"
 	"strconv"
 	"strings"
@@ -15,10 +16,17 @@ type Client struct {
 }
 
 func NewCiweimaoClient() *Client {
-	builderClient := builder.NewClient()
+	builderClient := builder.NewClient().SetResultFunc(func(result string) (string, error) {
+		text, err := decrypt.DecodeEncryptText(result, "")
+		if err != nil {
+			return "", err
+		}
+		return text, nil
+	})
 	client := &Client{Ciweimao: &catapi.Ciweimao{
 		Req: &catapi.CiweimaoRequest{BuilderClient: builderClient},
 	}}
+
 	return client
 }
 
@@ -57,7 +65,7 @@ func (client *Client) SetVersion(version string) *Client {
 // SetDebug 方法用于设置是否输出调试信息。它接收一个 bool 类型的参数，该参数表示是否输出调试信息。
 func (client *Client) SetDebug() *Client {
 	client.Ciweimao.Req.BuilderClient.SetDebug()
-	client.Ciweimao.Req.BuilderClient.SetDebugFile("catapi.txt")
+	client.Ciweimao.Req.BuilderClient.SetDebugFile("catapi")
 	return client
 }
 
@@ -87,7 +95,7 @@ func (client *Client) SetUserAgent(value string) *Client {
 
 // SetRetryCount 方法用于设置重试次数。它接收一个 int 类型的参数，该参数表示重试次数。
 func (client *Client) SetRetryCount(retryCount int) *Client {
-	client.Ciweimao.Req.BuilderClient.SetRetryNumber(retryCount)
+	client.Ciweimao.Req.BuilderClient.SetRetryCount(retryCount)
 	return client
 }
 
