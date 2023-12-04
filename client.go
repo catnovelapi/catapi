@@ -1,9 +1,12 @@
 package catapi
 
 import (
+	"crypto/rand"
+	"fmt"
 	"github.com/catnovelapi/builder"
 	"github.com/catnovelapi/catapi/catapi"
 	"github.com/catnovelapi/catapi/catapi/decrypt"
+	"io"
 	"log"
 	"strconv"
 	"strings"
@@ -23,6 +26,7 @@ func NewCiweimaoClient() *Client {
 		}
 		return text, nil
 	})
+	builderClient.SetContentType("application/x-www-form-urlencoded")
 	client := &Client{Ciweimao: &catapi.Ciweimao{
 		Req: &catapi.CiweimaoRequest{BuilderClient: builderClient},
 	}}
@@ -37,16 +41,16 @@ func (client *Client) R() *Client {
 		SetVersion("2.9.290").
 		SetDeviceToken("ciweimao_").
 		SetBaseURL("https://app.hbooker.com").
-		SetUserAgent("Android com.kuangxiangciweimao.novel")
+		SetUserAgent("Android com.kuangxiangciweimao.novel 2.9.290")
 }
 
 // UpdateVersion 方法用于更新版本号, 它会调用 Ciweimao 的 GetVersionApi 方法, 并将返回的版本号设置为 HTTP 请求的版本号。
 func (client *Client) UpdateVersion() *Client {
 	if version, err := client.Ciweimao.GetVersionApi(); err == nil {
 		client.SetVersion(version)
+		client.SetUserAgent("Android com.kuangxiangciweimao.novel " + version)
 	}
 	// refresh user agent
-	client.SetUserAgent("Android com.kuangxiangciweimao.novel")
 	return client
 }
 
@@ -87,9 +91,7 @@ func (client *Client) SetLoginToken(loginToken string) *Client {
 
 // SetUserAgent 方法用于设置 HTTP 请求的 User-Agent 部分。它接收一个 string 类型的参数，该参数表示 User-Agent 的值。
 func (client *Client) SetUserAgent(value string) *Client {
-	client.Ciweimao.Req.BuilderClient.SetUserAgent(value + " " +
-		client.Ciweimao.Req.BuilderClient.GetClientHeaders().Get("app_version"),
-	)
+	client.Ciweimao.Req.BuilderClient.SetUserAgent(value)
 	return client
 }
 
@@ -130,4 +132,19 @@ func (client *Client) SetAccount(account string) *Client {
 // SetAuthentication 方法用于设置 HTTP 请求的账号和登录令牌。它接收两个 string 类型的参数，第一个参数表示账号的值，第二个参数表示登录令牌的值。
 func (client *Client) SetAuthentication(account, loginToken string) *Client {
 	return client.SetAccount(account).SetLoginToken(loginToken)
+}
+
+func (client *Client) AndroidID() string {
+	uuid := make([]byte, 16)
+	n, err := io.ReadFull(rand.Reader, uuid)
+	if n != len(uuid) || err != nil {
+		log.Fatal(err)
+	}
+
+	// variant bits; see section 4.1.1
+	uuid[8] = uuid[8]&^0xc0 | 0x80
+
+	// version 4 (pseudo-random); see section 4.1.3
+	uuid[6] = uuid[6]&^0xf0 | 0x40
+	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
 }
