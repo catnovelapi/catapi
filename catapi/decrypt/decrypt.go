@@ -51,3 +51,11 @@ func DecodeEncryptText(str string, decodeKey string) (string, error) {
 	}
 	return string(raw), nil
 }
+
+func DecodeFunc(result string) (string, error) {
+	text, err := DecodeEncryptText(result, "")
+	if err != nil {
+		return "", err
+	}
+	return text, nil
+}
