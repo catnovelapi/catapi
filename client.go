@@ -62,7 +62,6 @@ func structToMap(auth any) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return result, nil
 }
 
@@ -71,9 +70,12 @@ func (client *Client) R() *API {
 	builderClient := builder.NewClient().
 		SetBaseURL(client.baseURL).
 		SetRetryCount(client.retryCount).
-		SetUserAgent(client.userAgent + client.authentication.Version).
+		SetUserAgent(client.userAgent+client.authentication.Version).
+		SetHeader("Content-Type", "application/x-www-form-urlencoded").
 		SetResultFunc(decrypt.DecodeFunc)
-
+	if client.debug {
+		builderClient.SetDebug()
+	}
 	if client.proxy != "" {
 		builderClient.SetProxy(client.proxy)
 	}
@@ -83,19 +85,8 @@ func (client *Client) R() *API {
 	} else {
 		builderClient.SetQueryParams(authMap)
 	}
-
 	return &API{client: client, builderClient: builderClient}
 }
-
-//// UpdateVersion 方法用于更新版本号, 它会调用 API 的 GetVersionApi 方法, 并将返回的版本号设置为 HTTP 请求的版本号。
-//func (client *Client) UpdateVersion() *Client {
-//	if version, err := client.Ciweimao.GetVersionApi(); err == nil {
-//		client.SetVersion(version)
-//		client.SetUserAgent("Android com.kuangxiangciweimao.novel " + version)
-//	}
-//	// refresh user agent
-//	return client
-//}
 
 // SetDeviceToken 方法用于设置 HTTP 请求的设备号。它接收一个 string 类型的参数，该参数表示设备号的值。
 func (client *Client) SetDeviceToken(deviceToken string) *Client {
