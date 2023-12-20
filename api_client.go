@@ -2,17 +2,12 @@ package catapi
 
 import (
 	"fmt"
-	"github.com/catnovelapi/builder"
 	"github.com/catnovelapi/catapi/catapi/decrypt"
 	"github.com/tidwall/gjson"
 )
 
-type CiweimaoRequest struct {
-	BuilderClient *builder.Client
-}
-
-func (request *CiweimaoRequest) Post(url string, data map[string]any) (gjson.Result, error) {
-	req := request.BuilderClient.R()
+func (cat *API) post(url string, data map[string]string) (gjson.Result, error) {
+	req := cat.builderClient.R()
 	if data != nil {
 		req.SetQueryParams(data)
 	}

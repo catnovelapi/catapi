@@ -2,9 +2,9 @@ package catapi
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"github.com/catnovelapi/builder"
-	"github.com/catnovelapi/catapi/catapi"
 	"github.com/catnovelapi/catapi/catapi/decrypt"
 	"io"
 	"log"
@@ -13,69 +13,102 @@ import (
 	"sync"
 )
 
-type Client struct {
-	m        sync.RWMutex     // 用于保证线程安全
-	Ciweimao *catapi.Ciweimao // 指向 Ciweimao 的指针, 用于调用 Ciweimao 的方法和接口
+type ciweimaoAuthentication struct {
+	Account     string `json:"account"`
+	LoginToken  string `json:"login_token"`
+	DeviceToken string `json:"device_token"`
+	Version     string `json:"app_version"`
 }
 
-func NewCiweimaoClient() *Client {
-	builderClient := builder.NewClient().SetResultFunc(func(result string) (string, error) {
-		text, err := decrypt.DecodeEncryptText(result, "")
-		if err != nil {
-			return "", err
-		}
-		return text, nil
-	})
-	builderClient.SetContentType("application/x-www-form-urlencoded")
-	client := &Client{Ciweimao: &catapi.Ciweimao{
-		Req: &catapi.CiweimaoRequest{BuilderClient: builderClient},
-	}}
+type Client struct {
+	m              sync.RWMutex // 用于保证线程安全
+	debug          bool
+	retryCount     int
+	baseURL        string
+	userAgent      string
+	proxy          string
+	authentication ciweimaoAuthentication
+}
 
-	return client
+type API struct {
+	client        *Client
+	builderClient *builder.Client
+}
+
+func NewClient() *Client {
+	return &Client{
+		retryCount: 7,
+		baseURL:    "https://app.hbooker.com",
+		userAgent:  "Android com.kuangxiangciweimao.novel ",
+		proxy:      "",
+		authentication: ciweimaoAuthentication{
+			Version:     "2.9.290",
+			DeviceToken: "ciweimao_",
+		},
+	}
+}
+
+// StructToMap converts a CiweimaoAuthentication struct to a map[string]interface{}
+func structToMap(auth any) (map[string]interface{}, error) {
+	// 序列化结构体为JSON
+	jsonBytes, err := json.Marshal(auth)
+	if err != nil {
+		return nil, err
+	}
+
+	// 反序列化JSON到map
+	var result map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // R 方法用于实例化一些默认的参数, 并返回一个 Client 对象的指针。
-func (client *Client) R() *Client {
-	return client.
-		SetRetryCount(7).
-		SetVersion("2.9.290").
-		SetDeviceToken("ciweimao_").
-		SetBaseURL("https://app.hbooker.com").
-		SetUserAgent("Android com.kuangxiangciweimao.novel 2.9.290")
-}
-
-// UpdateVersion 方法用于更新版本号, 它会调用 Ciweimao 的 GetVersionApi 方法, 并将返回的版本号设置为 HTTP 请求的版本号。
-func (client *Client) UpdateVersion() *Client {
-	if version, err := client.Ciweimao.GetVersionApi(); err == nil {
-		client.SetVersion(version)
-		client.SetUserAgent("Android com.kuangxiangciweimao.novel " + version)
+func (client *Client) R() *API {
+	builderClient := builder.NewClient().
+		SetBaseURL(client.baseURL).
+		SetRetryCount(client.retryCount).
+		SetUserAgent(client.userAgent+client.authentication.Version).
+		SetHeader("Content-Type", "application/x-www-form-urlencoded").
+		SetResultFunc(decrypt.DecodeFunc)
+	if client.debug {
+		builderClient.SetDebug()
 	}
-	// refresh user agent
-	return client
+	if client.proxy != "" {
+		builderClient.SetProxy(client.proxy)
+	}
+	authMap, err := structToMap(client.authentication)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		builderClient.SetQueryParams(authMap)
+	}
+	return &API{client: client, builderClient: builderClient}
 }
 
 // SetDeviceToken 方法用于设置 HTTP 请求的设备号。它接收一个 string 类型的参数，该参数表示设备号的值。
 func (client *Client) SetDeviceToken(deviceToken string) *Client {
-	client.Ciweimao.Req.BuilderClient.SetQueryParam("device_token", deviceToken)
+	client.authentication.DeviceToken = deviceToken
 	return client
 }
 
 // SetVersion 方法用于设置 HTTP 请求的版本号。它接收一个 string 类型的参数，该参数表示版本号的值。
 func (client *Client) SetVersion(version string) *Client {
-	client.Ciweimao.Req.BuilderClient.SetQueryParam("app_version", version)
+	client.authentication.Version = version
 	return client
 }
 
 // SetDebug 方法用于设置是否输出调试信息。它接收一个 bool 类型的参数，该参数表示是否输出调试信息。
 func (client *Client) SetDebug() *Client {
-	client.Ciweimao.Req.BuilderClient.SetDebug()
-	client.Ciweimao.Req.BuilderClient.SetDebugFile("catapi")
+	client.debug = true
 	return client
 }
 
 // SetProxy	方法用于设置 HTTP 请求的代理。它接收一个 string 类型的参数，该参数表示代理的值。
 func (client *Client) SetProxy(proxy string) *Client {
-	client.Ciweimao.Req.BuilderClient.SetProxy(proxy)
+	client.proxy = proxy
 	return client
 }
 
@@ -84,26 +117,26 @@ func (client *Client) SetLoginToken(loginToken string) *Client {
 	if len(loginToken) != 32 {
 		log.Println("loginToken length is not 32")
 	} else {
-		client.Ciweimao.Req.BuilderClient.SetQueryParam("login_token", loginToken)
+		client.authentication.LoginToken = loginToken
 	}
 	return client
 }
 
 // SetUserAgent 方法用于设置 HTTP 请求的 User-Agent 部分。它接收一个 string 类型的参数，该参数表示 User-Agent 的值。
 func (client *Client) SetUserAgent(value string) *Client {
-	client.Ciweimao.Req.BuilderClient.SetUserAgent(value)
+	client.userAgent = value
 	return client
 }
 
 // SetRetryCount 方法用于设置重试次数。它接收一个 int 类型的参数，该参数表示重试次数。
 func (client *Client) SetRetryCount(retryCount int) *Client {
-	client.Ciweimao.Req.BuilderClient.SetRetryCount(retryCount)
+	client.retryCount = retryCount
 	return client
 }
 
 // SetBaseURL 方法用于设置 HTTP 请求的 BaseURL 部分。它接收一个 string 类型的参数，该参数表示 BaseURL 的值。
 func (client *Client) SetBaseURL(baseURL string) *Client {
-	client.Ciweimao.Req.BuilderClient.SetBaseURL(baseURL)
+	client.baseURL = baseURL
 	return client
 }
 
@@ -124,7 +157,8 @@ func (client *Client) SetAccount(account string) *Client {
 	} else if !strings.Contains(unescapeUnicode, "书客") {
 		log.Println("set account error:", "account is not contains 书客")
 	} else {
-		client.Ciweimao.Req.BuilderClient.SetQueryParam("account", unescapeUnicode)
+		//client.API.Req.BuilderClient.SetQueryParam("account", unescapeUnicode)
+		client.authentication.Account = unescapeUnicode
 	}
 	return client
 }
