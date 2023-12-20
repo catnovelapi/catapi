@@ -30,7 +30,7 @@ type Client struct {
 }
 
 type API struct {
-	client        *Client
+	Client        *Client
 	builderClient *builder.Client
 }
 
@@ -84,7 +84,7 @@ func (client *Client) R() *API {
 	} else {
 		builderClient.SetQueryParams(authMap)
 	}
-	return &API{client: client, builderClient: builderClient}
+	return &API{Client: client, builderClient: builderClient}
 }
 
 // SetDeviceToken 方法用于设置 HTTP 请求的设备号。它接收一个 string 类型的参数，该参数表示设备号的值。
@@ -156,7 +156,7 @@ func (client *Client) SetAccount(account string) *Client {
 	} else if !strings.Contains(unescapeUnicode, "书客") {
 		log.Println("set account error:", "account is not contains 书客")
 	} else {
-		//client.API.Req.BuilderClient.SetQueryParam("account", unescapeUnicode)
+		//Client.API.Req.BuilderClient.SetQueryParam("account", unescapeUnicode)
 		client.authentication.Account = unescapeUnicode
 	}
 	return client
