@@ -12,6 +12,7 @@ import (
 	"sync"
 )
 
+// ciweimaoAuthentication 用于保存账号, 登录令牌, 设备号, 版本号的结构体
 type ciweimaoAuthentication struct {
 	Account     string `json:"account"`
 	LoginToken  string `json:"login_token"`
@@ -21,19 +22,20 @@ type ciweimaoAuthentication struct {
 
 type Client struct {
 	m              sync.RWMutex // 用于保证线程安全
-	debug          bool
-	retryCount     int
-	baseURL        string
-	userAgent      string
-	proxy          string
+	debug          bool         // 是否输出调试信息, 默认为 false
+	retryCount     int          // 重试次数, 默认为 7
+	baseURL        string       // BaseURL, 默认为 "https://app.hbooker.com"
+	userAgent      string       // User-Agent, 默认为 "Android com.kuangxiangciweimao.novel "
+	proxy          string       // 代理, 默认为空
 	authentication ciweimaoAuthentication
 }
 
 type API struct {
-	Client        *Client
-	builderClient *builder.Client
+	Client        *Client         // 用于保存 Client 对象的指针
+	builderClient *builder.Client // 用于保存 builder.Client 对象的指针
 }
 
+// NewClient 方法用于实例化一个 Client 对象的指针。
 func NewClient() *Client {
 	return &Client{
 		retryCount: 7,
@@ -77,6 +79,9 @@ func (client *Client) R() *API {
 	}
 	if client.proxy != "" {
 		builderClient.SetProxy(client.proxy)
+	}
+	if client.authentication.Account == "" || client.authentication.LoginToken == "" {
+		log.Println("account or loginToken is empty, please use SetAuthentication method to set account and loginToken")
 	}
 	authMap, err := structToMap(client.authentication)
 	if err != nil {
@@ -156,7 +161,6 @@ func (client *Client) SetAccount(account string) *Client {
 	} else if !strings.Contains(unescapeUnicode, "书客") {
 		log.Println("set account error:", "account is not contains 书客")
 	} else {
-		//Client.API.Req.BuilderClient.SetQueryParam("account", unescapeUnicode)
 		client.authentication.Account = unescapeUnicode
 	}
 	return client
