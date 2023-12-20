@@ -35,23 +35,17 @@ type API struct {
 	builderClient *builder.Client
 }
 
-func NewCiweimaoClient() *Client {
-	//builderClient.SetContentType("application/x-www-form-urlencoded")
-	client := &Client{
+func NewClient() *Client {
+	return &Client{
 		retryCount: 7,
 		baseURL:    "https://app.hbooker.com",
-		userAgent:  "Android com.kuangxiangciweimao.novel 2.9.290",
+		userAgent:  "Android com.kuangxiangciweimao.novel ",
 		proxy:      "",
 		authentication: ciweimaoAuthentication{
 			Version:     "2.9.290",
 			DeviceToken: "ciweimao_",
 		},
-		//Ciweimao: &API{
-		//	Req: &CiweimaoRequest{BuilderClient: builderClient},
-		//}
 	}
-
-	return client
 }
 
 // StructToMap converts a CiweimaoAuthentication struct to a map[string]interface{}
@@ -77,7 +71,7 @@ func (client *Client) R() *API {
 	builderClient := builder.NewClient().
 		SetBaseURL(client.baseURL).
 		SetRetryCount(client.retryCount).
-		SetUserAgent(client.userAgent).
+		SetUserAgent(client.userAgent + client.authentication.Version).
 		SetResultFunc(decrypt.DecodeFunc)
 
 	if client.proxy != "" {
@@ -139,7 +133,6 @@ func (client *Client) SetLoginToken(loginToken string) *Client {
 
 // SetUserAgent 方法用于设置 HTTP 请求的 User-Agent 部分。它接收一个 string 类型的参数，该参数表示 User-Agent 的值。
 func (client *Client) SetUserAgent(value string) *Client {
-	//client.API.Req.BuilderClient.SetUserAgent(value)
 	client.userAgent = value
 	return client
 }
