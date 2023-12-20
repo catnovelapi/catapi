@@ -11,7 +11,7 @@ type CiweimaoRequest struct {
 	BuilderClient *builder.Client
 }
 
-func (request *CiweimaoRequest) Post(url string, data map[string]any) (gjson.Result, error) {
+func (request *CiweimaoRequest) Post(url string, data map[string]string) (gjson.Result, error) {
 	req := request.BuilderClient.R()
 	if data != nil {
 		req.SetQueryParams(data)

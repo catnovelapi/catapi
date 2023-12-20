@@ -8,6 +8,7 @@ github.com/catnovelapi/builder v0.0.8 h1:/Rx3f4CUk08+tPL9Ym3qvpdxw20e3X+361b/lbi
 github.com/catnovelapi/builder v0.0.8/go.mod h1:jopAUwm1ykBKnGFgo/yb2e9W80dDXEo9j7mHYlmp2U4=
 github.com/catnovelapi/builder v0.1.0 h1:bNDiu79GhjfEgBBESXm1KFLZtv3dYkhtUO3KTJO52E8=
 github.com/catnovelapi/builder v0.1.0/go.mod h1:jopAUwm1ykBKnGFgo/yb2e9W80dDXEo9j7mHYlmp2U4=
+github.com/catnovelapi/builder v0.4.6/go.mod h1:kUn0U1Z56xZjIm5b1G1+/FU1OO2MZt4SgAb0evK4bno=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/tidwall/gjson v1.17.0 h1:/Jocvlh98kcTfpN2+JzGQWQcqrPQwDrVEMApx/M5ZwM=
