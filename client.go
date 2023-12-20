@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/catnovelapi/builder"
-	"github.com/catnovelapi/catapi/catapi"
 	"github.com/catnovelapi/catapi/catapi/decrypt"
 	"io"
 	"log"
@@ -14,8 +13,8 @@ import (
 )
 
 type Client struct {
-	m        sync.RWMutex     // 用于保证线程安全
-	Ciweimao *catapi.Ciweimao // 指向 Ciweimao 的指针, 用于调用 Ciweimao 的方法和接口
+	m        sync.RWMutex // 用于保证线程安全
+	Ciweimao *Ciweimao    // 指向 Ciweimao 的指针, 用于调用 Ciweimao 的方法和接口
 }
 
 func NewCiweimaoClient() *Client {
@@ -27,8 +26,8 @@ func NewCiweimaoClient() *Client {
 		return text, nil
 	})
 	builderClient.SetContentType("application/x-www-form-urlencoded")
-	client := &Client{Ciweimao: &catapi.Ciweimao{
-		Req: &catapi.CiweimaoRequest{BuilderClient: builderClient},
+	client := &Client{Ciweimao: &Ciweimao{
+		Req: &CiweimaoRequest{BuilderClient: builderClient},
 	}}
 
 	return client
