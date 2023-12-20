@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/catnovelapi/builder"
-	"github.com/catnovelapi/catapi/catapi/decrypt"
 	"io"
 	"log"
 	"strconv"
@@ -72,7 +71,7 @@ func (client *Client) R() *API {
 		SetRetryCount(client.retryCount).
 		SetUserAgent(client.userAgent+client.authentication.Version).
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
-		SetResultFunc(decrypt.DecodeFunc)
+		SetResultFunc(decodeFunc)
 	if client.debug {
 		builderClient.SetDebug()
 	}

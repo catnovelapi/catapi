@@ -1,4 +1,4 @@
-package decrypt
+package catapi
 
 import (
 	"crypto/aes"
@@ -10,25 +10,25 @@ import (
 )
 
 // SHA256 sha256 编码
-func SHA256(data []byte) []byte {
+func sha(data []byte) []byte {
 	ret := sha256.Sum256(data)
 	return ret[:]
 }
 
 func aesDecrypt(EncryptKey string, ciphertext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(SHA256([]byte(EncryptKey))[:32])
+	block, err := aes.NewCipher(sha([]byte(EncryptKey))[:32])
 	if err != nil {
 		return nil, err
 	}
 	blockModel := cipher.NewCBCDecrypter(block, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 	plainText := make([]byte, len(ciphertext))
 	blockModel.CryptBlocks(plainText, ciphertext)
-	plainText = PKCS7UnPadding(plainText)
+	plainText = pkcs7UnPadding(plainText)
 	return plainText, nil
 }
 
 // PKCS7UnPadding 对齐
-func PKCS7UnPadding(plainText []byte) []byte {
+func pkcs7UnPadding(plainText []byte) []byte {
 	length := len(plainText)
 	unpadding := int(plainText[length-1])
 	return plainText[:(length - unpadding)]
@@ -52,7 +52,7 @@ func DecodeEncryptText(str string, decodeKey string) (string, error) {
 	return string(raw), nil
 }
 
-func DecodeFunc(result string) (string, error) {
+func decodeFunc(result string) (string, error) {
 	text, err := DecodeEncryptText(result, "")
 	if err != nil {
 		return "", err
