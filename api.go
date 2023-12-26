@@ -1,6 +1,7 @@
 package catapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/tidwall/gjson"
 	"regexp"
@@ -154,48 +155,48 @@ func (cat *API) SignupApi(account string, password string) (gjson.Result, error)
 }
 
 // ChapterCommandApi 获取章节command,需要传入章节ID
-func (cat *API) ChapterCommandApi(chapterId string) (string, error) {
+func (cat *API) ChapterCommandApi(chapterId string) (gjson.Result, error) {
 	if commandInfo, err := cat.post(chapterCommandApiPoint, map[string]string{"chapter_id": chapterId}); err != nil {
-		return "", fmt.Errorf("ChapterID:%s,获取章节command失败,tips:%s", chapterId, err.Error())
+		return gjson.Result{}, fmt.Errorf("ChapterID:%s,获取章节command失败,tips:%s", chapterId, err.Error())
 	} else {
-		return commandInfo.Get("data.command").String(), nil
+		return commandInfo.Get("data"), nil
 	}
+}
+
+// ContentInfoApi 获取章节内容,需要传入章节ID
+func (cat *API) ContentInfoApi(chapterId string) (*ContentInfoTemplate, error) {
+	command, err := cat.ChapterCommandApi(chapterId)
+	if err != nil {
+		return nil, fmt.Errorf("ChapterTitle:%s,获取章节command失败,tips:%s", chapterId, err.Error())
+	}
+	return cat.ContentInfoByCommandApi(chapterId, command.Get("chapter_command").String())
+}
+
+func (cat *API) ContentInfoByCommandApi(chapterId, command string) (*ContentInfoTemplate, error) {
+	params := map[string]string{"chapter_id": chapterId, "chapter_command": command}
+	chapter, err := cat.post(chapterInfoApiPoint, params)
+	if err != nil {
+		return nil, err
+	}
+	var chapterInfo *ContentInfoTemplate
+	err = json.Unmarshal([]byte(chapter.Get("data.chapter_info").String()), &chapterInfo)
+	if err != nil {
+		return nil, err
+	}
+	if chapterInfo.TxtContent == "" {
+		return nil, fmt.Errorf("ChapterTitle:%s,获取章节内容失败,tips:%s", chapterId, "txt_content is empty")
+	}
+	chapterInfoText, ok := DecodeEncryptText(chapterInfo.TxtContent, command)
+	if ok != nil {
+		return nil, ok
+	} else {
+		chapterInfo.TxtContent = chapterInfoText
+	}
+	return chapterInfo, nil
 }
 
 func (cat *API) TsukkomiNumApi(chapterID string) (gjson.Result, error) {
 	return cat.post(chapterTsukkomiNumApiPoint, map[string]string{"chapter_id": chapterID})
-}
-
-// contentInfoApi 获取章节内容,需要传入章节ID
-func (cat *API) contentInfoApi(chapterId string) (gjson.Result, string, error) {
-	command, err := cat.ChapterCommandApi(chapterId)
-	if err != nil {
-		return gjson.Result{}, "", fmt.Errorf("ChapterTitle:%s,获取章节command失败,tips:%s", chapterId, err.Error())
-	}
-	chapterInfo, err := cat.post(chapterInfoApiPoint, map[string]string{"chapter_id": chapterId, "chapter_command": command})
-	if err != nil {
-		return gjson.Result{}, "", err
-	}
-	return chapterInfo.Get("data.chapter_info"), command, nil
-}
-
-// ChapterContentApi 获取章节内容,需要传入章节ID
-func (cat *API) ChapterContentApi(chapterId string) (string, error) {
-	chapterInfo, command, err := cat.contentInfoApi(chapterId)
-	if err != nil {
-		return "", err
-	}
-	chapterInfoText, err := DecodeEncryptText(chapterInfo.Get("txt_content").String(), command)
-	if err != nil {
-		return "", err
-	}
-	return chapterInfoText, nil
-}
-
-// ChapterInfoApi 获取章节信息,需要传入章节ID
-func (cat *API) ChapterInfoApi(chapterId string) (gjson.Result, error) {
-	chapterInfo, _, err := cat.contentInfoApi(chapterId)
-	return chapterInfo, err
 }
 
 func (cat *API) RegV2Api() (gjson.Result, error) {
