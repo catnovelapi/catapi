@@ -5,12 +5,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/catnovelapi/builder"
+	"github.com/joho/godotenv"
 	"io"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 )
+
+func init() {
+	if err := godotenv.Load(); err != nil {
+		defaultEnv := map[string]string{"LOGIN_TOKEN": "", "LOGIN_ACCOUNT": ""}
+		if ok := godotenv.Write(defaultEnv, ".env"); ok != nil {
+			log.Println("write default env error:", ok)
+		}
+	} else {
+		log.Println("load env success")
+	}
+}
 
 // ciweimaoAuthentication 用于保存账号, 登录令牌, 设备号, 版本号的结构体
 type ciweimaoAuthentication struct {
@@ -46,6 +59,8 @@ func NewClient() *Client {
 		authentication: ciweimaoAuthentication{
 			Version:     "2.9.290",
 			DeviceToken: "ciweimao_",
+			LoginToken:  os.Getenv("LOGIN_TOKEN"),
+			Account:     os.Getenv("LOGIN_ACCOUNT"),
 		},
 	}
 }
