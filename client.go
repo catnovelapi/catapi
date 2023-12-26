@@ -5,13 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/catnovelapi/builder"
+	"github.com/joho/godotenv"
 	"io"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 )
 
+// ciweimaoAuthentication 用于保存账号, 登录令牌, 设备号, 版本号的结构体
 type ciweimaoAuthentication struct {
 	Account     string `json:"account"`
 	LoginToken  string `json:"login_token"`
@@ -21,20 +24,30 @@ type ciweimaoAuthentication struct {
 
 type Client struct {
 	m              sync.RWMutex // 用于保证线程安全
-	debug          bool
-	retryCount     int
-	baseURL        string
-	userAgent      string
-	proxy          string
+	debug          bool         // 是否输出调试信息, 默认为 false
+	retryCount     int          // 重试次数, 默认为 7
+	baseURL        string       // BaseURL, 默认为 "https://app.hbooker.com"
+	userAgent      string       // User-Agent, 默认为 "Android com.kuangxiangciweimao.novel "
+	proxy          string       // 代理, 默认为空
 	authentication ciweimaoAuthentication
 }
 
 type API struct {
-	client        *Client
-	builderClient *builder.Client
+	Client         *Client         // 用于保存 Client 对象的指针
+	builderClient  *builder.Client // 用于保存 builder.Client 对象的指针
+	authentication ciweimaoAuthentication
 }
 
+// NewClient 方法用于实例化一个 Client 对象的指针。
 func NewClient() *Client {
+	if err := godotenv.Load(); err != nil {
+		defaultEnv := map[string]string{"LOGIN_TOKEN": "", "LOGIN_ACCOUNT": ""}
+		if ok := godotenv.Write(defaultEnv, ".env"); ok != nil {
+			log.Println("write default env error:", ok)
+		}
+	} else {
+		log.Println("load env success")
+	}
 	return &Client{
 		retryCount: 7,
 		baseURL:    "https://app.hbooker.com",
@@ -43,48 +56,10 @@ func NewClient() *Client {
 		authentication: ciweimaoAuthentication{
 			Version:     "2.9.290",
 			DeviceToken: "ciweimao_",
+			LoginToken:  os.Getenv("LOGIN_TOKEN"),
+			Account:     os.Getenv("LOGIN_ACCOUNT"),
 		},
 	}
-}
-
-// StructToMap converts a CiweimaoAuthentication struct to a map[string]interface{}
-func structToMap(auth any) (map[string]interface{}, error) {
-	// 序列化结构体为JSON
-	jsonBytes, err := json.Marshal(auth)
-	if err != nil {
-		return nil, err
-	}
-
-	// 反序列化JSON到map
-	var result map[string]interface{}
-	err = json.Unmarshal(jsonBytes, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-// R 方法用于实例化一些默认的参数, 并返回一个 Client 对象的指针。
-func (client *Client) R() *API {
-	builderClient := builder.NewClient().
-		SetBaseURL(client.baseURL).
-		SetRetryCount(client.retryCount).
-		SetUserAgent(client.userAgent+client.authentication.Version).
-		SetHeader("Content-Type", "application/x-www-form-urlencoded").
-		SetResultFunc(decodeFunc)
-	if client.debug {
-		builderClient.SetDebug()
-	}
-	if client.proxy != "" {
-		builderClient.SetProxy(client.proxy)
-	}
-	authMap, err := structToMap(client.authentication)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		builderClient.SetQueryParams(authMap)
-	}
-	return &API{client: client, builderClient: builderClient}
 }
 
 // SetDeviceToken 方法用于设置 HTTP 请求的设备号。它接收一个 string 类型的参数，该参数表示设备号的值。
@@ -156,7 +131,6 @@ func (client *Client) SetAccount(account string) *Client {
 	} else if !strings.Contains(unescapeUnicode, "书客") {
 		log.Println("set account error:", "account is not contains 书客")
 	} else {
-		//client.API.Req.BuilderClient.SetQueryParam("account", unescapeUnicode)
 		client.authentication.Account = unescapeUnicode
 	}
 	return client
@@ -165,6 +139,59 @@ func (client *Client) SetAccount(account string) *Client {
 // SetAuthentication 方法用于设置 HTTP 请求的账号和登录令牌。它接收两个 string 类型的参数，第一个参数表示账号的值，第二个参数表示登录令牌的值。
 func (client *Client) SetAuthentication(account, loginToken string) *Client {
 	return client.SetAccount(account).SetLoginToken(loginToken)
+}
+
+// StructToMap converts a CiweimaoAuthentication struct to a map[string]interface{}
+func structToMap(auth any) (map[string]interface{}, error) {
+	// 序列化结构体为JSON
+	jsonBytes, err := json.Marshal(auth)
+	if err != nil {
+		return nil, err
+	}
+
+	// 反序列化JSON到map
+	var result map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// R 方法用于实例化一些默认的参数, 并返回一个 Client 对象的指针。
+func (client *Client) R() *API {
+	builderClient := builder.NewClient().
+		SetBaseURL(client.baseURL).
+		SetRetryCount(client.retryCount).
+		SetUserAgent(client.userAgent+client.authentication.Version).
+		SetHeader("Content-Type", "application/x-www-form-urlencoded").
+		SetResultFunc(decodeFunc)
+	if client.debug {
+		builderClient.SetDebug()
+	}
+	if client.proxy != "" {
+		builderClient.SetProxy(client.proxy)
+	}
+	api := &API{Client: client, builderClient: builderClient, authentication: client.authentication}
+	if client.authentication.Account == "" || client.authentication.LoginToken == "" {
+		log.Println("account or loginToken is empty, please use SetAuthentication method to set account and loginToken")
+	}
+	if authMap, err := structToMap(client.authentication); err != nil {
+		fmt.Println(err)
+	} else {
+		api.builderClient.SetQueryParams(authMap)
+	}
+	return api
+}
+
+func (cat *API) SetAuthentication(account, loginToken string) {
+	cat.authentication.Account = account
+	cat.authentication.LoginToken = loginToken
+	if authMap, err := structToMap(cat.authentication); err != nil {
+		fmt.Println(err)
+	} else {
+		cat.builderClient.SetQueryParams(authMap)
+	}
 }
 
 func (client *Client) AndroidID() string {
