@@ -24,6 +24,16 @@ func (cat *API) post(url string, data map[string]string) (gjson.Result, error) {
 		return result, nil
 	}
 }
+func (cat *API) checkbookList(response gjson.Result, err error) (gjson.Result, error) {
+	if err != nil {
+		return gjson.Result{}, err
+	} else if len(response.Get("data.book_list").Array()) == 0 {
+		return gjson.Result{}, fmt.Errorf("get book_list is empty")
+	} else {
+		return response.Get("data.book_list"), nil
+	}
+
+}
 func (cat *API) DownloadCover(url string) ([]byte, error) {
 	for i := 0; i < 5; i++ {
 		response, err := cat.builderClient.R().Get(url)
@@ -113,26 +123,12 @@ func (cat *API) ReviewCommentReplyListApi(commentId string, page string) (gjson.
 
 // SearchByKeywordApi 搜索书籍,需要传入关键字和页码
 func (cat *API) SearchByKeywordApi(keyword, page string) (gjson.Result, error) {
-	query := map[string]string{"count": "10", "page": page, "category_index": "0", "key": keyword}
-	if search, err := cat.post(searchBookApiPoint, query); err != nil {
-		return gjson.Result{}, err
-	} else if len(search.Get("data.book_list").Array()) == 0 {
-		return gjson.Result{}, fmt.Errorf("search book is empty")
-	} else {
-		return search.Get("data.book_list"), nil
-	}
+	return cat.checkbookList(cat.post(searchBookApiPoint, map[string]string{"count": "10", "page": page, "category_index": "0", "key": keyword}))
 }
 
 // RedTagBookListApi 获取红标签书籍列表
 func (cat *API) RedTagBookListApi(tagName, page string) (gjson.Result, error) {
-	query := map[string]string{"count": "10", "page": page, "type": "0", "tag": tagName}
-	if result, err := cat.post(redTagApiPoint, query); err != nil {
-		return gjson.Result{}, err
-	} else if len(result.Get("data.book_list").Array()) == 0 {
-		return gjson.Result{}, fmt.Errorf("search book red tag is empty")
-	} else {
-		return result.Get("data.book_list"), nil
-	}
+	return cat.checkbookList(cat.post(redTagApiPoint, map[string]string{"count": "10", "page": page, "type": "0", "tag": tagName}))
 }
 
 // YellowAndBlueTagBookListApi 获取黄蓝标签书籍列表
@@ -140,13 +136,7 @@ func (cat *API) YellowAndBlueTagBookListApi(tagName, filterWord, page string) (g
 	query := map[string]string{"filter_word": filterWord, "count": "10", "use_daguan": "0", "page": page,
 		"is_paid": "", "category_index": "0", "key": "", "filter_uptime": "", "up_status": "", "order": ""}
 	query["tags"] = `[{"filter":"1","tag":"` + tagName + `"}]`
-	if result, err := cat.post(searchBookApiPoint, query); err != nil {
-		return gjson.Result{}, err
-	} else if len(result.Get("data.book_list").Array()) == 0 {
-		return gjson.Result{}, fmt.Errorf("search book yellow tag is empty")
-	} else {
-		return result.Get("data.book_list"), nil
-	}
+	return cat.checkbookList(cat.post(searchBookApiPoint, query))
 }
 
 // SignupApi 注册账号,需要传入账号和密码
@@ -156,30 +146,30 @@ func (cat *API) SignupApi(account string, password string) (gjson.Result, error)
 
 // ChapterCommandApi 获取章节command,需要传入章节ID
 func (cat *API) ChapterCommandApi(chapterId string) (gjson.Result, error) {
-	if commandInfo, err := cat.post(chapterCommandApiPoint, map[string]string{"chapter_id": chapterId}); err != nil {
+	if response, err := cat.post(chapterCommandApiPoint, map[string]string{"chapter_id": chapterId}); err != nil {
 		return gjson.Result{}, fmt.Errorf("ChapterID:%s,获取章节command失败,tips:%s", chapterId, err.Error())
 	} else {
-		return commandInfo.Get("data"), nil
+		return response.Get("data"), nil
 	}
 }
 
 // ContentInfoApi 获取章节内容,需要传入章节ID
 func (cat *API) ContentInfoApi(chapterId string) (*ContentInfoTemplate, error) {
-	command, err := cat.ChapterCommandApi(chapterId)
+	response, err := cat.ChapterCommandApi(chapterId)
 	if err != nil {
 		return nil, fmt.Errorf("ChapterTitle:%s,获取章节command失败,tips:%s", chapterId, err.Error())
 	}
-	return cat.ContentInfoByCommandApi(chapterId, command.Get("chapter_command").String())
+	return cat.ContentInfoByCommandApi(chapterId, response.Get("chapter_command").String())
 }
 
 func (cat *API) ContentInfoByCommandApi(chapterId, command string) (*ContentInfoTemplate, error) {
 	params := map[string]string{"chapter_id": chapterId, "chapter_command": command}
-	chapter, err := cat.post(chapterInfoApiPoint, params)
+	response, err := cat.post(chapterInfoApiPoint, params)
 	if err != nil {
 		return nil, err
 	}
 	var chapterInfo *ContentInfoTemplate
-	err = json.Unmarshal([]byte(chapter.Get("data.chapter_info").String()), &chapterInfo)
+	err = json.Unmarshal([]byte(response.Get("data.chapter_info").String()), &chapterInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -218,14 +208,8 @@ func (cat *API) BookShelfIdListApi() (gjson.Result, error) {
 	}
 }
 func (cat *API) BookShelfListApi(shelfId string) (gjson.Result, error) {
-	query := map[string]string{"shelf_id": shelfId, "last_mod_time": "0", "direction": "prev", "order": "last_read_time", "count": "999", "page": "0"}
-	if result, err := cat.post(bookshelfBookListApiPoint, query); err != nil {
-		return gjson.Result{}, err
-	} else if len(result.Get("data.book_list").Array()) == 0 {
-		return gjson.Result{}, fmt.Errorf("bookshelf is empty")
-	} else {
-		return result.Get("data.book_list"), nil
-	}
+	params := map[string]string{"shelf_id": shelfId, "last_mod_time": "0", "direction": "prev", "order": "last_read_time", "count": "999", "page": "0"}
+	return cat.checkbookList(cat.post(bookshelfBookListApiPoint, params))
 }
 
 func (cat *API) GetVersionApi() (string, error) {
