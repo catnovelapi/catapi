@@ -8,6 +8,14 @@ type BookInfoQuery struct {
 	CarouselPosition string `json:"carousel_position"`
 	BookId           string `json:"book_id"`
 }
+type ShelfListQuery struct {
+	ShelfId     string `json:"shelf_id"`
+	LastModTime int    `json:"last_mod_time"`
+	Direction   string `json:"direction"`
+	Order       string `json:"order"`
+	Count       int    `json:"count"`
+	Page        string `json:"page"`
+}
 type SearchTagFilterQuery struct {
 	Filter int    `json:"filter"`
 	Tag    string `json:"tag"`

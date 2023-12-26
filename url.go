@@ -23,3 +23,5 @@ const reviewCommentReplyListApiPoint = "/book/get_review_comment_reply_list"
 
 const checkVersionApiPoint = "/setting/check_version"
 const getVersionApiPoint = "/setting/get_version"
+
+const setLastReadChapterApiPoint = "/bookshelf/set_last_read_chapter"
