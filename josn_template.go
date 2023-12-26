@@ -22,7 +22,7 @@ type SearchTagFilterQuery struct {
 }
 type SearchKeywordQuery struct {
 	Count         int    `json:"count"`
-	Page          string `json:"page"`
+	Page          int    `json:"page"`
 	CategoryIndex int    `json:"category_index"`
 	Key           string `json:"key"`
 }

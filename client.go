@@ -14,17 +14,6 @@ import (
 	"sync"
 )
 
-func init() {
-	if err := godotenv.Load(); err != nil {
-		defaultEnv := map[string]string{"LOGIN_TOKEN": "", "LOGIN_ACCOUNT": ""}
-		if ok := godotenv.Write(defaultEnv, ".env"); ok != nil {
-			log.Println("write default env error:", ok)
-		}
-	} else {
-		log.Println("load env success")
-	}
-}
-
 // ciweimaoAuthentication 用于保存账号, 登录令牌, 设备号, 版本号的结构体
 type ciweimaoAuthentication struct {
 	Account     string `json:"account"`
@@ -51,6 +40,14 @@ type API struct {
 
 // NewClient 方法用于实例化一个 Client 对象的指针。
 func NewClient() *Client {
+	if err := godotenv.Load(); err != nil {
+		defaultEnv := map[string]string{"LOGIN_TOKEN": "", "LOGIN_ACCOUNT": ""}
+		if ok := godotenv.Write(defaultEnv, ".env"); ok != nil {
+			log.Println("write default env error:", ok)
+		}
+	} else {
+		log.Println("load env success")
+	}
 	return &Client{
 		retryCount: 7,
 		baseURL:    "https://app.hbooker.com",

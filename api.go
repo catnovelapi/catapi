@@ -130,9 +130,8 @@ func (cat *API) ReviewCommentReplyListApi(commentId string, page string) (gjson.
 }
 
 // SearchByKeywordApi 搜索书籍,需要传入关键字和页码
-func (cat *API) SearchByKeywordApi(keyword, page string) (gjson.Result, error) {
+func (cat *API) SearchByKeywordApi(keyword string, page int) (gjson.Result, error) {
 	return cat.checkbookList(cat.post(searchBookApiPoint, SearchKeywordQuery{Count: 10, Page: page, Key: keyword}))
-
 }
 
 // RedTagBookListApi 获取红标签书籍列表
