@@ -79,7 +79,8 @@ func (cat *API) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
 	if len(bookId) != 9 {
 		return gjson.Result{}, fmt.Errorf("bookId length is not 9")
 	}
-	bookInfo, err := cat.post(bookInfoApiPoint, BookInfoQuery{BookId: bookId, ModuleId: 20005, TabType: 200, Recommend: "module_list"})
+	params := BookInfoQuery{BookId: bookId, ModuleId: "20005", TabType: "200", Recommend: "module_list", UseDaguan: "0"}
+	bookInfo, err := cat.post(bookInfoApiPoint, params)
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, err.Error())
 	} else {
@@ -130,8 +131,8 @@ func (cat *API) ReviewCommentReplyListApi(commentId string, page string) (gjson.
 }
 
 // SearchByKeywordApi 搜索书籍,需要传入关键字和页码
-func (cat *API) SearchByKeywordApi(keyword string, page int) (gjson.Result, error) {
-	return cat.checkbookList(cat.post(searchBookApiPoint, SearchKeywordQuery{Count: 10, Page: page, Key: keyword}))
+func (cat *API) SearchByKeywordApi(keyword string, page string) (gjson.Result, error) {
+	return cat.checkbookList(cat.post(searchBookApiPoint, SearchKeywordQuery{Count: "10", Page: page, CategoryIndex: "0", Key: keyword}))
 }
 
 // RedTagBookListApi 获取红标签书籍列表
@@ -143,15 +144,16 @@ func (cat *API) RedTagBookListApi(tagName, page string) (gjson.Result, error) {
 func (cat *API) YellowAndBlueTagBookListApi(tagName, filterWord, page string) (gjson.Result, error) {
 	params := SearchTagsQuery{
 		FilterWord:    filterWord,
-		Count:         10,
+		Count:         "10",
 		Page:          page,
+		UseDaguan:     "0",
 		IsPaid:        "",
-		CategoryIndex: 0,
+		CategoryIndex: "0",
 		Key:           "",
 		FilterUptime:  "",
 		UpStatus:      "",
 		Order:         "",
-		Tags:          []SearchTagFilterQuery{{Filter: 1, Tag: tagName}},
+		Tags:          []SearchTagFilterQuery{{Filter: "1", Tag: tagName}},
 	}
 	return cat.checkbookList(cat.post(searchBookApiPoint, params))
 }
@@ -224,7 +226,7 @@ func (cat *API) BookShelfIdListApi() (gjson.Result, error) {
 	}
 }
 func (cat *API) BookShelfListApi(shelfId, page string) (gjson.Result, error) {
-	params := ShelfListQuery{ShelfId: shelfId, Direction: "prev", Order: "last_read_time", Count: 999, Page: page}
+	params := ShelfListQuery{LastModTime: "0", ShelfId: shelfId, Direction: "prev", Order: "last_read_time", Count: "999", Page: page}
 	return cat.checkbookList(cat.post(bookshelfBookListApiPoint, params))
 }
 
