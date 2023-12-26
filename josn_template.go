@@ -1,5 +1,37 @@
 package catapi
 
+type BookInfoQuery struct {
+	UseDaguan        int    `json:"use_daguan"`
+	ModuleId         int    `json:"module_id"`
+	TabType          int    `json:"tab_type"`
+	Recommend        string `json:"recommend"`
+	CarouselPosition string `json:"carousel_position"`
+	BookId           string `json:"book_id"`
+}
+type SearchTagFilterQuery struct {
+	Filter int    `json:"filter"`
+	Tag    string `json:"tag"`
+}
+type SearchKeywordQuery struct {
+	Count         int    `json:"count"`
+	Page          string `json:"page"`
+	CategoryIndex int    `json:"category_index"`
+	Key           string `json:"key"`
+}
+
+type SearchTagsQuery struct {
+	FilterWord    interface{}            `json:"filter_word"`
+	Count         int                    `json:"count"`
+	UseDaguan     int                    `json:"use_daguan"`
+	Page          interface{}            `json:"page"`
+	IsPaid        string                 `json:"is_paid"`
+	CategoryIndex int                    `json:"category_index"`
+	Key           string                 `json:"key"`
+	FilterUptime  string                 `json:"filter_uptime"`
+	UpStatus      string                 `json:"up_status"`
+	Order         string                 `json:"order"`
+	Tags          []SearchTagFilterQuery `json:"tags"`
+}
 type ContentInfoTemplate struct {
 	ChapterId         string `json:"chapter_id" bson:"chapter_id"`
 	BookId            string `json:"book_id" bson:"book_id"`

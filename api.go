@@ -8,10 +8,15 @@ import (
 )
 
 // post 发送post请求
-func (cat *API) post(url string, data map[string]string) (gjson.Result, error) {
+func (cat *API) post(url string, data any) (gjson.Result, error) {
 	req := cat.builderClient.R()
 	if data != nil {
-		req.SetQueryParams(data)
+		switch params := data.(type) {
+		case map[string]string:
+			req.SetQueryParams(params)
+		default:
+			req.SetBody(data)
+		}
 	}
 	response, err := req.Post(url)
 	if err != nil {
@@ -71,10 +76,11 @@ func (cat *API) ChaptersCatalogV2Api(bookId string) (gjson.Result, error) {
 
 // BookInfoApiByBookId 通过书籍ID获取书籍信息
 func (cat *API) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
-	query := map[string]string{"use_daguan": "0", "module_id": "20005", "tab_type": "200", "recommend": "module_list", "carousel_position": "", "book_id": bookId}
 	if len(bookId) != 9 {
 		return gjson.Result{}, fmt.Errorf("bookId length is not 9")
-	} else if bookInfo, err := cat.post(bookInfoApiPoint, query); err != nil {
+	}
+	bookInfo, err := cat.post(bookInfoApiPoint, BookInfoQuery{BookId: bookId, ModuleId: 20005, TabType: 200, Recommend: "module_list"})
+	if err != nil {
 		return gjson.Result{}, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, err.Error())
 	} else {
 		return bookInfo.Get("data.book_info"), nil
@@ -123,7 +129,8 @@ func (cat *API) ReviewCommentReplyListApi(commentId string, page string) (gjson.
 
 // SearchByKeywordApi 搜索书籍,需要传入关键字和页码
 func (cat *API) SearchByKeywordApi(keyword, page string) (gjson.Result, error) {
-	return cat.checkbookList(cat.post(searchBookApiPoint, map[string]string{"count": "10", "page": page, "category_index": "0", "key": keyword}))
+	return cat.checkbookList(cat.post(searchBookApiPoint, SearchKeywordQuery{Count: 10, Page: page, Key: keyword}))
+
 }
 
 // RedTagBookListApi 获取红标签书籍列表
@@ -133,10 +140,19 @@ func (cat *API) RedTagBookListApi(tagName, page string) (gjson.Result, error) {
 
 // YellowAndBlueTagBookListApi 获取黄蓝标签书籍列表
 func (cat *API) YellowAndBlueTagBookListApi(tagName, filterWord, page string) (gjson.Result, error) {
-	query := map[string]string{"filter_word": filterWord, "count": "10", "use_daguan": "0", "page": page,
-		"is_paid": "", "category_index": "0", "key": "", "filter_uptime": "", "up_status": "", "order": ""}
-	query["tags"] = `[{"filter":"1","tag":"` + tagName + `"}]`
-	return cat.checkbookList(cat.post(searchBookApiPoint, query))
+	params := SearchTagsQuery{
+		FilterWord:    filterWord,
+		Count:         10,
+		Page:          page,
+		IsPaid:        "",
+		CategoryIndex: 0,
+		Key:           "",
+		FilterUptime:  "",
+		UpStatus:      "",
+		Order:         "",
+		Tags:          []SearchTagFilterQuery{{Filter: 1, Tag: tagName}},
+	}
+	return cat.checkbookList(cat.post(searchBookApiPoint, params))
 }
 
 // SignupApi 注册账号,需要传入账号和密码
