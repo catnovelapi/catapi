@@ -178,7 +178,7 @@ func (cat *API) ContentInfoApi(chapterId string) (*ContentInfoTemplate, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ChapterTitle:%s,获取章节command失败,tips:%s", chapterId, err.Error())
 	}
-	return cat.ContentInfoByCommandApi(chapterId, response.Get("chapter_command").String())
+	return cat.ContentInfoByCommandApi(chapterId, response.Get("command").String())
 }
 
 func (cat *API) ContentInfoByCommandApi(chapterId, command string) (*ContentInfoTemplate, error) {
