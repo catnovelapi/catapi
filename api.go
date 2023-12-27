@@ -18,6 +18,11 @@ func (cat *API) post(url string, data any) (gjson.Result, error) {
 			req.SetBody(data)
 		}
 	}
+	if url == autoRegV2ApiPoint {
+		// 暂时删掉login_token和account
+		req.SetQueryParam("login_token", "")
+		req.SetQueryParam("account", "")
+	}
 	response, err := req.Post(url)
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("request error: %s", err.Error())
