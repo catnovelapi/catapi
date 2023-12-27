@@ -12,7 +12,7 @@ func (cat *API) post(url string, data any) (gjson.Result, error) {
 	req := cat.builderClient.R()
 	if data != nil {
 		switch params := data.(type) {
-		case map[string]string:
+		case map[string]any:
 			req.SetQueryParams(params)
 		default:
 			req.SetBody(data)
@@ -62,12 +62,12 @@ func (cat *API) AccountInfoApi() (gjson.Result, error) {
 
 // Deprecated: use ChaptersCatalogV2Api instead
 func (cat *API) ChaptersCatalogApi(bookId string) (gjson.Result, error) {
-	return cat.post(catalogApiPoint, map[string]string{"book_id": bookId})
+	return cat.post(catalogApiPoint, map[string]any{"book_id": bookId})
 }
 
 // ChaptersCatalogV2Api 获取章节列表,需要传入书籍ID
 func (cat *API) ChaptersCatalogV2Api(bookId string) (gjson.Result, error) {
-	if catalog, err := cat.post(catalogNewApiPoint, map[string]string{"book_id": bookId}); err != nil {
+	if catalog, err := cat.post(catalogNewApiPoint, map[string]any{"book_id": bookId}); err != nil {
 		return gjson.Result{}, err
 	} else {
 		return catalog.Get("data.chapter_list"), nil
@@ -99,7 +99,7 @@ func (cat *API) BookInfoApiByBookURL(url string) (gjson.Result, error) {
 
 // ReviewListApi 获取书评列表,需要传入书籍ID和页码
 func (cat *API) ReviewListApi(bookId string, page string) (gjson.Result, error) {
-	response, err := cat.post(reviewListApiPoint, map[string]string{"book_id": bookId, "count": "10", "page": page, "type": "1"})
+	response, err := cat.post(reviewListApiPoint, map[string]any{"book_id": bookId, "count": "10", "page": page, "type": "1"})
 	if err != nil {
 		return gjson.Result{}, err
 	} else if len(response.Get("data.review_list").Array()) == 0 {
@@ -111,7 +111,7 @@ func (cat *API) ReviewListApi(bookId string, page string) (gjson.Result, error) 
 
 // ReviewCommentListApi 获取书评评论列表,需要传入书评ID和页码
 func (cat *API) ReviewCommentListApi(reviewId string, page string) (gjson.Result, error) {
-	if result, err := cat.post(bookReviewCommentListApiPoint, map[string]string{"review_id": reviewId, "count": "10", "page": page}); err != nil {
+	if result, err := cat.post(bookReviewCommentListApiPoint, map[string]any{"review_id": reviewId, "count": "10", "page": page}); err != nil {
 		return gjson.Result{}, err
 	} else {
 		return result.Get("data"), nil
@@ -120,7 +120,7 @@ func (cat *API) ReviewCommentListApi(reviewId string, page string) (gjson.Result
 
 // ReviewCommentReplyListApi 获取书评回复列表,需要传入书评ID和页码
 func (cat *API) ReviewCommentReplyListApi(commentId string, page string) (gjson.Result, error) {
-	response, err := cat.post(reviewCommentReplyListApiPoint, map[string]string{"comment_id": commentId, "count": "10", "page": page})
+	response, err := cat.post(reviewCommentReplyListApiPoint, map[string]any{"comment_id": commentId, "count": "10", "page": page})
 	if err != nil {
 		return gjson.Result{}, err
 	} else if len(response.Get("data.review_comment_reply_list").Array()) == 0 {
@@ -137,7 +137,7 @@ func (cat *API) SearchByKeywordApi(keyword string, page string) (gjson.Result, e
 
 // RedTagBookListApi 获取红标签书籍列表
 func (cat *API) RedTagBookListApi(tagName, page string) (gjson.Result, error) {
-	return cat.checkbookList(cat.post(redTagApiPoint, map[string]string{"count": "10", "page": page, "type": "0", "tag": tagName}))
+	return cat.checkbookList(cat.post(redTagApiPoint, map[string]any{"count": "10", "page": page, "type": "0", "tag": tagName}))
 }
 
 // YellowAndBlueTagBookListApi 获取黄蓝标签书籍列表
@@ -160,12 +160,12 @@ func (cat *API) YellowAndBlueTagBookListApi(tagName, filterWord, page string) (g
 
 // SignupApi 注册账号,需要传入账号和密码
 func (cat *API) SignupApi(account string, password string) (gjson.Result, error) {
-	return cat.post(loginApiPoint, map[string]string{"login_name": account, "passwd": password})
+	return cat.post(loginApiPoint, map[string]any{"login_name": account, "passwd": password})
 }
 
 // ChapterCommandApi 获取章节command,需要传入章节ID
 func (cat *API) ChapterCommandApi(chapterId string) (gjson.Result, error) {
-	if response, err := cat.post(chapterCommandApiPoint, map[string]string{"chapter_id": chapterId}); err != nil {
+	if response, err := cat.post(chapterCommandApiPoint, map[string]any{"chapter_id": chapterId}); err != nil {
 		return gjson.Result{}, fmt.Errorf("ChapterID:%s,获取章节command失败,tips:%s", chapterId, err.Error())
 	} else {
 		return response.Get("data"), nil
@@ -182,7 +182,7 @@ func (cat *API) ContentInfoApi(chapterId string) (*ContentInfoTemplate, error) {
 }
 
 func (cat *API) ContentInfoByCommandApi(chapterId, command string) (*ContentInfoTemplate, error) {
-	response, err := cat.post(chapterInfoApiPoint, map[string]string{"chapter_id": chapterId, "chapter_command": command})
+	response, err := cat.post(chapterInfoApiPoint, map[string]any{"chapter_id": chapterId, "chapter_command": command})
 	if err != nil {
 		return nil, err
 	}
@@ -204,11 +204,11 @@ func (cat *API) ContentInfoByCommandApi(chapterId, command string) (*ContentInfo
 }
 
 func (cat *API) TsukkomiNumApi(chapterID string) (gjson.Result, error) {
-	return cat.post(chapterTsukkomiNumApiPoint, map[string]string{"chapter_id": chapterID})
+	return cat.post(chapterTsukkomiNumApiPoint, map[string]any{"chapter_id": chapterID})
 }
 
 func (cat *API) RegV2Api() (gjson.Result, error) {
-	query := map[string]string{"gender": "1", "channel": "oppo", "uuid": "android " + cat.Client.AndroidID()}
+	query := map[string]any{"gender": "1", "channel": "oppo", "uuid": "android " + cat.Client.AndroidID()}
 	if autoReg, err := cat.post(autoRegV2ApiPoint, query); err != nil {
 		return gjson.Result{}, err
 	} else {
@@ -246,28 +246,28 @@ func (cat *API) CheckVersionApi() (gjson.Result, error) {
 }
 
 func (cat *API) UseGeetestInfoApi(loginName string) (int, error) {
-	useGeetest, err := cat.post(useGeetestApiPoint, map[string]string{"login_name": loginName})
+	useGeetest, err := cat.post(useGeetestApiPoint, map[string]any{"login_name": loginName})
 	if err != nil {
 		return 0, err
 	}
 	return int(useGeetest.Get("data.need_use_geetest").Int()), nil
 }
 func (cat *API) BookmarkListApi(bookID string, page string) (gjson.Result, error) {
-	return cat.post("/book/get_bookmark_list", map[string]string{"count": "10", "book_id": bookID, "page": page})
+	return cat.post("/book/get_bookmark_list", map[string]any{"count": "10", "book_id": bookID, "page": page})
 }
 func (cat *API) BdaudioInfoApi(bookID string) (gjson.Result, error) {
-	return cat.post("/reader/bdaudio_info", map[string]string{"book_id": bookID})
+	return cat.post("/reader/bdaudio_info", map[string]any{"book_id": bookID})
 }
 
 func (cat *API) AddReadbookApi(bookID string, readTimes string, getTime string) (gjson.Result, error) {
-	return cat.post("/reader/add_readbook", map[string]string{"book_id": bookID, "readTimes": readTimes, "getTime": getTime})
+	return cat.post("/reader/add_readbook", map[string]any{"book_id": bookID, "readTimes": readTimes, "getTime": getTime})
 }
 
 func (cat *API) SetLastReadChapterApi(lastReadChapterID string, bookID string) (gjson.Result, error) {
-	return cat.post(setLastReadChapterApiPoint, map[string]string{"last_read_chapter_id": lastReadChapterID, "book_id": bookID})
+	return cat.post(setLastReadChapterApiPoint, map[string]any{"last_read_chapter_id": lastReadChapterID, "book_id": bookID})
 }
 func (cat *API) PostPrivacyPolicyVersionApi() (gjson.Result, error) {
-	return cat.post("/setting/privacy_policy_version", map[string]string{"privacy_policy_version": "1"})
+	return cat.post("/setting/privacy_policy_version", map[string]any{"privacy_policy_version": "1"})
 }
 
 func (cat *API) PostPropInfoApi() (gjson.Result, error) {

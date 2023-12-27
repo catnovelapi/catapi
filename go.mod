@@ -3,7 +3,7 @@ module github.com/catnovelapi/catapi
 go 1.19
 
 require (
-	github.com/catnovelapi/builder v0.5.2
+	github.com/catnovelapi/builder v0.5.4
 	github.com/joho/godotenv v1.5.1
 	github.com/tidwall/gjson v1.17.0
 )
