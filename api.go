@@ -74,26 +74,30 @@ func (cat *API) ChaptersCatalogV2Api(bookId string) (gjson.Result, error) {
 	}
 }
 
-// BookInfoApiByBookId 通过书籍ID获取书籍信息
-func (cat *API) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
-	if len(bookId) != 9 {
-		return gjson.Result{}, fmt.Errorf("bookId length is not 9")
-	}
+// BookInfoApi 通过书籍ID获取书籍信息
+func (cat *API) BookInfoApi(bookId string) (*BookInfoTemplate, error) {
 	params := BookInfoQuery{BookId: bookId, ModuleId: "20005", TabType: "200", Recommend: "module_list", UseDaguan: "0"}
 	bookInfo, err := cat.post(bookInfoApiPoint, params)
 	if err != nil {
-		return gjson.Result{}, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, err.Error())
-	} else {
-		return bookInfo.Get("data.book_info"), nil
+		return nil, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, err.Error())
 	}
+	var bookInfoTemplate *BookInfoTemplate
+	err = json.Unmarshal([]byte(bookInfo.Get("data.book_info").String()), &bookInfoTemplate)
+	if err != nil {
+		return nil, err
+	}
+	if bookInfoTemplate.BookName == "" {
+		return nil, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, "book_name is empty")
+	}
+	return bookInfoTemplate, nil
 }
 
 // BookInfoApiByBookURL 通过书籍URL获取书籍信息
-func (cat *API) BookInfoApiByBookURL(url string) (gjson.Result, error) {
+func (cat *API) BookInfoApiByBookURL(url string) (*BookInfoTemplate, error) {
 	if bi := regexp.MustCompile(`(\d{9})`).FindStringSubmatch(url); len(bi) < 2 {
-		return gjson.Result{}, fmt.Errorf("bookId is empty")
+		return nil, fmt.Errorf("bookId is empty")
 	} else {
-		return cat.BookInfoApiByBookId(bi[1])
+		return cat.BookInfoApi(bi[1])
 	}
 }
 
