@@ -245,12 +245,12 @@ func (cat *API) CheckVersionApi() (gjson.Result, error) {
 	}
 }
 
-func (cat *API) UseGeetestInfoApi(loginName string) (int, error) {
+func (cat *API) UseGeetestInfoApi(loginName string) (gjson.Result, error) {
 	useGeetest, err := cat.post(useGeetestApiPoint, map[string]any{"login_name": loginName})
 	if err != nil {
-		return 0, err
+		return gjson.Result{}, err
 	}
-	return int(useGeetest.Get("data.need_use_geetest").Int()), nil
+	return useGeetest.Get("data"), nil
 }
 func (cat *API) BookmarkListApi(bookID string, page string) (gjson.Result, error) {
 	return cat.post("/book/get_bookmark_list", map[string]any{"count": "10", "book_id": bookID, "page": page})
