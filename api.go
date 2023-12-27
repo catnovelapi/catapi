@@ -74,26 +74,30 @@ func (cat *API) ChaptersCatalogV2Api(bookId string) (gjson.Result, error) {
 	}
 }
 
-// BookInfoApiByBookId 通过书籍ID获取书籍信息
-func (cat *API) BookInfoApiByBookId(bookId string) (gjson.Result, error) {
-	if len(bookId) != 9 {
-		return gjson.Result{}, fmt.Errorf("bookId length is not 9")
-	}
+// BookInfoApi 通过书籍ID获取书籍信息
+func (cat *API) BookInfoApi(bookId string) (*BookInfoTemplate, error) {
 	params := BookInfoQuery{BookId: bookId, ModuleId: "20005", TabType: "200", Recommend: "module_list", UseDaguan: "0"}
 	bookInfo, err := cat.post(bookInfoApiPoint, params)
 	if err != nil {
-		return gjson.Result{}, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, err.Error())
-	} else {
-		return bookInfo.Get("data.book_info"), nil
+		return nil, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, err.Error())
 	}
+	var bookInfoTemplate *BookInfoTemplate
+	err = json.Unmarshal([]byte(bookInfo.Get("data.book_info").String()), &bookInfoTemplate)
+	if err != nil {
+		return nil, err
+	}
+	if bookInfoTemplate.BookName == "" {
+		return nil, fmt.Errorf("bookId:%s,获取书籍信息失败:%s", bookId, "book_name is empty")
+	}
+	return bookInfoTemplate, nil
 }
 
 // BookInfoApiByBookURL 通过书籍URL获取书籍信息
-func (cat *API) BookInfoApiByBookURL(url string) (gjson.Result, error) {
+func (cat *API) BookInfoApiByBookURL(url string) (*BookInfoTemplate, error) {
 	if bi := regexp.MustCompile(`(\d{9})`).FindStringSubmatch(url); len(bi) < 2 {
-		return gjson.Result{}, fmt.Errorf("bookId is empty")
+		return nil, fmt.Errorf("bookId is empty")
 	} else {
-		return cat.BookInfoApiByBookId(bi[1])
+		return cat.BookInfoApi(bi[1])
 	}
 }
 
@@ -178,7 +182,7 @@ func (cat *API) ContentInfoApi(chapterId string) (*ContentInfoTemplate, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ChapterTitle:%s,获取章节command失败,tips:%s", chapterId, err.Error())
 	}
-	return cat.ContentInfoByCommandApi(chapterId, response.Get("chapter_command").String())
+	return cat.ContentInfoByCommandApi(chapterId, response.Get("command").String())
 }
 
 func (cat *API) ContentInfoByCommandApi(chapterId, command string) (*ContentInfoTemplate, error) {
@@ -245,12 +249,12 @@ func (cat *API) CheckVersionApi() (gjson.Result, error) {
 	}
 }
 
-func (cat *API) UseGeetestInfoApi(loginName string) (int, error) {
+func (cat *API) UseGeetestInfoApi(loginName string) (gjson.Result, error) {
 	useGeetest, err := cat.post(useGeetestApiPoint, map[string]any{"login_name": loginName})
 	if err != nil {
-		return 0, err
+		return gjson.Result{}, err
 	}
-	return int(useGeetest.Get("data.need_use_geetest").Int()), nil
+	return useGeetest.Get("data"), nil
 }
 func (cat *API) BookmarkListApi(bookID string, page string) (gjson.Result, error) {
 	return cat.post("/book/get_bookmark_list", map[string]any{"count": "10", "book_id": bookID, "page": page})
