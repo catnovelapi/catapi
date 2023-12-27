@@ -1,39 +1,39 @@
 package catapi
 
 type BookInfoQuery struct {
-	UseDaguan        int    `json:"use_daguan"`
-	ModuleId         int    `json:"module_id"`
-	TabType          int    `json:"tab_type"`
+	UseDaguan        string `json:"use_daguan"`
+	ModuleId         string `json:"module_id"`
+	TabType          string `json:"tab_type"`
 	Recommend        string `json:"recommend"`
 	CarouselPosition string `json:"carousel_position"`
 	BookId           string `json:"book_id"`
 }
 type ShelfListQuery struct {
 	ShelfId     string `json:"shelf_id"`
-	LastModTime int    `json:"last_mod_time"`
+	LastModTime string `json:"last_mod_time"`
 	Direction   string `json:"direction"`
 	Order       string `json:"order"`
-	Count       int    `json:"count"`
+	Count       string `json:"count"`
 	Page        string `json:"page"`
 }
 type SearchTagFilterQuery struct {
-	Filter int    `json:"filter"`
+	Filter string `json:"filter"`
 	Tag    string `json:"tag"`
 }
 type SearchKeywordQuery struct {
-	Count         int    `json:"count"`
-	Page          int    `json:"page"`
-	CategoryIndex int    `json:"category_index"`
+	Count         string `json:"count"`
+	Page          string `json:"page"`
+	CategoryIndex string `json:"category_index"`
 	Key           string `json:"key"`
 }
 
 type SearchTagsQuery struct {
 	FilterWord    interface{}            `json:"filter_word"`
-	Count         int                    `json:"count"`
-	UseDaguan     int                    `json:"use_daguan"`
+	Count         string                 `json:"count"`
+	UseDaguan     string                 `json:"use_daguan"`
 	Page          interface{}            `json:"page"`
 	IsPaid        string                 `json:"is_paid"`
-	CategoryIndex int                    `json:"category_index"`
+	CategoryIndex string                 `json:"category_index"`
 	Key           string                 `json:"key"`
 	FilterUptime  string                 `json:"filter_uptime"`
 	UpStatus      string                 `json:"up_status"`
