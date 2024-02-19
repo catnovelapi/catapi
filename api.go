@@ -18,6 +18,11 @@ func (cat *API) post(url string, data any) (gjson.Result, error) {
 			req.SetBody(data)
 		}
 	}
+	if url == autoRegV2ApiPoint {
+		// 暂时删掉login_token和account
+		req.SetQueryParam("login_token", "")
+		req.SetQueryParam("account", "")
+	}
 	response, err := req.Post(url)
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("request error: %s", err.Error())
@@ -66,11 +71,22 @@ func (cat *API) ChaptersCatalogApi(bookId string) (gjson.Result, error) {
 }
 
 // ChaptersCatalogV2Api 获取章节列表,需要传入书籍ID
-func (cat *API) ChaptersCatalogV2Api(bookId string) (gjson.Result, error) {
-	if catalog, err := cat.post(catalogNewApiPoint, map[string]any{"book_id": bookId}); err != nil {
-		return gjson.Result{}, err
+func (cat *API) ChaptersCatalogV2Api(bookId string) (*ChapterListTemplate, error) {
+	catalog, err := cat.post(catalogNewApiPoint, map[string]any{"book_id": bookId})
+	if err != nil {
+		return nil, err
 	} else {
-		return catalog.Get("data.chapter_list"), nil
+		var chapterList *ChapterListTemplate
+		err = json.Unmarshal([]byte(catalog.String()), &chapterList)
+		if err != nil {
+			return nil, err
+		}
+		if chapterList.Code != "100000" {
+			return nil, fmt.Errorf("bookId:%s,获取章节列表失败:%v", bookId, chapterList.Tip)
+		} else if len(chapterList.Data.ChapterList) == 0 {
+			return nil, fmt.Errorf("bookId:%s,获取章节列表失败:%v", bookId, "chapter_list is empty")
+		}
+		return chapterList, nil
 	}
 }
 

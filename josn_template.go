@@ -124,3 +124,28 @@ type BookInfoTemplate struct {
 	WeekNoVipClick  string `json:"week_no_vip_click" bson:"week_no_vip_click"`
 	WeekRecommend   string `json:"week_recommend" bson:"week_recommend"`
 }
+type ChapterListTemplate struct {
+	Code string      `json:"code" bson:"code"`
+	Tip  interface{} `json:"tip" bson:"tip"`
+	Data struct {
+		ChapterList []struct {
+			ChapterList []struct {
+				ChapterId      string `json:"chapter_id" bson:"chapter_id"`
+				ChapterIndex   string `json:"chapter_index" bson:"chapter_index"`
+				ChapterTitle   string `json:"chapter_title" bson:"chapter_title"`
+				WordCount      string `json:"word_count" bson:"word_count"`
+				TsukkomiAmount string `json:"tsukkomi_amount" bson:"tsukkomi_amount"`
+				IsPaid         string `json:"is_paid" bson:"is_paid"`
+				Mtime          string `json:"mtime" bson:"mtime"`
+				IsValid        string `json:"is_valid" bson:"is_valid"`
+				AuthAccess     string `json:"auth_access" bson:"auth_access"`
+			} `json:"chapter_list" bson:"chapter_list"`
+			MaxUpdateTime   string `json:"max_update_time" bson:"max_update_time"`
+			MaxChapterIndex string `json:"max_chapter_index" bson:"max_chapter_index"`
+			DivisionId      string `json:"division_id" bson:"division_id"`
+			DivisionIndex   string `json:"division_index" bson:"division_index"`
+			DivisionName    string `json:"division_name" bson:"division_name"`
+		} `json:"chapter_list" bson:"chapter_list"`
+	} `json:"data" bson:"data"`
+	ScrollChests []interface{} `json:"scroll_chests" bson:"scroll_chests"`
+}
